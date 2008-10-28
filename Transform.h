@@ -12,13 +12,13 @@
 #include "nv/nv_math.h"
 #include "nv/nv_algebra.h"
 
-class Transform  
+class Transform
 {
 public:
 	Transform();
 	virtual ~Transform();
-	static void forward(float amount, vec3& eye, vec3& lookAt);
-	static void sideways(float amount, vec3& eye, vec3& lookAt, vec3& up);
+	static void forward(float amount, vec3& eye, vec3& lookAt, float xMax, float yMax, float zMax);
+	static void sideways(float amount, vec3& eye, vec3& lookAt, vec3& up, float xMax, float yMax);
 	static void left(float degrees, vec3& eye, vec3& lookAt, vec3& up);
 	static void up(float degrees, vec3& eye, vec3& lookAt, vec3& up);
 	static void straighten(vec3& eye, vec3& lookAt, vec3& up);

@@ -7,20 +7,34 @@
 bool mapOn = false;
 vec3 storedEye, storedLookAt, storedUp;
 
-void Transform::forward(float amount, vec3& eye, vec3& lookAt) {
+void Transform::forward(float amount, vec3& eye, vec3& lookAt, float xMax, float yMax, float zMax) {
 	vec3 lookingDirection = lookAt - eye;
 	lookingDirection.normalize();
 	eye += (amount * lookingDirection);
 	
 	// Don't let users move below the ground-plane
-	if (eye.z < 0) {
-		eye.z = 0;
-	}
+	if (eye.z < 2) {
+		eye.z = 2;
+	} else if (eye.z > zMax) {
+		eye.z = zMax;
+	} 
 	
-	lookAt += (amount * lookingDirection);
+	if (eye.x < -xMax) {
+		eye.x = -xMax;
+	} else if (eye.x > xMax) {
+		eye.x = xMax;
+	} 
+	
+	if (eye.y < -yMax) {
+		eye.y = -yMax;
+	} else if (eye.y > yMax) {
+		eye.y = yMax;
+	} 
+	
+	lookAt = eye + lookingDirection;
 }
 
-void Transform::sideways(float amount, vec3& eye, vec3& lookAt, vec3& up) {
+void Transform::sideways(float amount, vec3& eye, vec3& lookAt, vec3& up, float xMax, float yMax) {
 
 	vec3 lookingDirection = lookAt - eye;
 	vec3 right;
@@ -29,8 +43,20 @@ void Transform::sideways(float amount, vec3& eye, vec3& lookAt, vec3& up) {
 	
 	right.normalize();
 	eye += (amount * right);
-	lookAt += (amount * right);
-
+	
+	if (eye.x < -xMax) {
+		eye.x = -xMax;
+	} else if (eye.x > xMax) {
+		eye.x = xMax;
+	} 
+	
+	if (eye.y < -yMax) {
+		eye.y = -yMax;
+	} else if (eye.y > yMax) {
+		eye.y = yMax;
+	} 
+	
+	lookAt = eye + lookingDirection;
 }
 
 //Takes as input the current eye position, and the current up vector.
