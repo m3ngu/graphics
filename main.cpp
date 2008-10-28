@@ -14,6 +14,7 @@ int amount;
 
 vec3 eye;
 vec3 up;
+vec3 lookAt;
 bool updateLight0, updateLight1;
 int w, h;
 unsigned int nindices;
@@ -52,24 +53,44 @@ void keyboard(unsigned char key, int x, int y) {
 		amount--;
 		printf("amount set to %d\n", amount);
 		break;
+	case 'w':
+		Transform::forward(static_cast<float>(amount), eye, lookAt);
+		break;
+	case 's':
+		Transform::forward(static_cast<float>(-amount), eye, lookAt);
+		break;
+	case 'a':
+		Transform::sideways(static_cast<float>(-amount), eye, lookAt, up);
+		break;
+	case 'd':
+		Transform::sideways(static_cast<float>(amount), eye, lookAt, up);
+		break;
+	case 'c':
+		Transform::straighten( eye, lookAt, up);
+		break;
+	case 'm':
+		Transform::toggleMapView( eye, lookAt, up);
+		break;
 	}
+	
 	glutPostRedisplay();
 }
 
 void specialKey(int key, int x, int y) {
 	switch(key) {
-	case 100: //left
-		Transform::left(static_cast<float>(amount), eye,  up);
-		break;
-	case 101: //up
-		Transform::up(static_cast<float>(amount),  eye,  up);
-		break;
-	case 102: //right
-		Transform::left(static_cast<float>(-amount),  eye,  up);
-		break;
-	case 103: //down
-		Transform::up(static_cast<float>(-amount),  eye,  up);
-		break;
+		
+		case GLUT_KEY_LEFT: //left
+			Transform::left(static_cast<float>(amount), eye, lookAt,  up);
+			break;
+		case GLUT_KEY_UP: //up
+			Transform::up(static_cast<float>(amount),  eye, lookAt,  up);
+			break;
+		case GLUT_KEY_RIGHT: //right
+			Transform::left(static_cast<float>(-amount),  eye, lookAt,  up);
+			break;
+		case GLUT_KEY_DOWN: //down
+			Transform::up(static_cast<float>(-amount), eye, lookAt,  up);
+			break;
 	}
 	up.normalize();
 	glutPostRedisplay();
@@ -149,10 +170,10 @@ void reshape(int width, int height){
 }
 
 void init() {
-	eye = vec3(0, -10, 5);
-	
-	//eye = vec3(0, 20, 80);
-	up = vec3(0, 1, 0);
+	eye		= vec3(0,	-10	,	5	);
+  //eye		= vec3(0,	20	,	80	);
+	lookAt	= vec3(0,	0	,	5	);
+	up		= vec3(0,	0	,	1	);
 	amount = 5;
 	
 	// Load the textures
@@ -180,12 +201,12 @@ void init() {
 	    
 	treeStump = glGenLists(1);
 	glNewList(treeStump, GL_COMPILE);
-	gluQuadricTexture(cyl, GL_TRUE);
-    gluDisk(cyl,0,2,100,5);
-    glTranslatef(0.0,0.0,-3.0);
-    gluCylinder(cyl, 2, 2, 3, 100, 5);
-    gluDisk(cyl,0,2,100,5);
-    //glutSolidSphere(0.191, polySubdivisions, polySubdivisions);
+		gluQuadricTexture(cyl, GL_TRUE);
+		gluDisk(cyl,0,2,100,5);
+		glTranslatef(0.0,0.0,-3.0);
+		gluCylinder(cyl, 2, 2, 3, 100, 5);
+		gluDisk(cyl,0,2,100,5);
+		//glutSolidSphere(0.191, polySubdivisions, polySubdivisions);
 	glEndList();
 	
 	glEnable(GL_DEPTH_TEST);
@@ -199,10 +220,9 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(eye.x, eye.y, eye.z,
-			0, 0, 5,
-			/*0, 20, 0,*/
-			up.x, up.y, up.z);
+	gluLookAt(	   eye.x,    eye.y	,    eye.z,
+				lookAt.x, lookAt.y	, lookAt.z,
+				    up.x,     up.y	,     up.z);
 
 	// Ground
 	
