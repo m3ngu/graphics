@@ -2,12 +2,13 @@
 #include "NVMeshMender.h"
 #include <math.h>
 #include <stdlib.h>
+#include "objload.h"
 
 #ifndef sqrtf
 #define sqrtf sqrt
 #endif
 
-void scale_down( int nverts, float *&vertexdata );
+void scale_down( int nverts, float *&vertexdata, float center[], float scale );
 
 static void normalize( float v[3] )
 {
@@ -25,11 +26,15 @@ static void normalize( float v[3] )
     v[1] = v[1]*len;
     v[2] = v[2]*len;
 }
-
+/*Just a wrapper function over LoadObjModel*/
+bool LoadObject(const char *fileName, objects &object, float center[], float scale) {
+	return LoadObjModel(fileName ,object.nverts , object.nindices, object.indices,
+		object.vertexdata, object.normaldata, object.tangendata, object.binormdata, object.texcoords, center, scale );
+}
 bool LoadObjModel( const char *fileName,
                    unsigned int &nverts, unsigned int &nindices, unsigned int *&indices,
                    float *&vertexdata, float *&normaldata, float *&tangendata, float *&binormdata,
-				   float *&texcoords )
+				   float *&texcoords, float center[], float scale)
 {
    	nvObjReader* reader = new nvObjReader();
 	reader->ReadFile(fileName,0);
@@ -147,16 +152,16 @@ bool LoadObjModel( const char *fileName,
     }
 
     // Scale the geometry down into the appropriate range.
-    scale_down( nverts, vertexdata );
+    scale_down( nverts, vertexdata, center, scale );
 
     return true;
 }
 
-void scale_down( int nverts, float *&vertexdata )
+void scale_down( int nverts, float *&vertexdata, float center[], float scale )
 {
     int i;
     float minmax[6];
-    float center[3] = { 0.0, 0.0, 0.0 };
+    //float center[3] = { 0.0, -0.2, 0.0 };
     float radius = 2.0;
 
     // Determine model extents.
@@ -173,7 +178,13 @@ void scale_down( int nverts, float *&vertexdata )
         if ( v[2] < minmax[4] ) minmax[4] = v[2];
         if ( v[2] > minmax[5] ) minmax[5] = v[2];
         }
+	float height1, height2, height3;
+	height1 = minmax[1]-minmax[0];
+	height2 = minmax[3]-minmax[2];
+	height3 = minmax[5]-minmax[4];
 
+	printf("heights are  %f,%f,%f\n",height1,height2,height3);
+	//printf("The height of the object is %f or %f or %f \n"
     // Scale to shift to [-radius,radius]
     float rad[3];
     rad[0] = 0.5f*(minmax[1]-minmax[0]);
@@ -188,8 +199,12 @@ void scale_down( int nverts, float *&vertexdata )
     float oldradius;
     float newradius;
     oldradius = sqrtf( rad[0]*rad[0] + rad[1]*rad[1] + rad[2]*rad[2] );
-    newradius = radius / oldradius;
-    
+    newradius = raduis/oldradius;
+
+	printf("The old readius is %f\n",oldradius);
+	//printf("New Radius is %f\n",newradius);
+	//newradius = newradius/scale;
+    printf("New Radius is %f\n",newradius);
     for ( i = 0; i < nverts; i++ )
     {
         int id = 3*i;
