@@ -15,33 +15,33 @@ extern const float DEFAULTATTENUATION[3];
 
 using namespace std;
 
-class Color
+class Colors
 {
 public:
 	float r, g, b, a;
-	LightColor(float red, float green, float blue, float alpha);
-	LightColor operator + (LightColor c1,LightColor c2);
-	LightColor operator * (float f,LightColor c2);
-	LightColor operator * (LightColor c1,LightColor c2);
-	LightColor operator * (LightColor c2,float f);
-	bool operator > (LightColor c1, LightColor c2);
-	virtual ~LightColor(){};	
-}
-struct DirectionalLight
-{
-	vec3 dir;
-	LightColor color;
+	Colors();
+	Colors(float red, float green, float blue, float alpha);
+	Colors operator + (Colors c1,Colors c2);
+	Colors operator * (float f,Colors c2);
+	Colors operator * (Colors c1,Colors c2);
+	Colors operator * (Colors c2,float f);
+	bool operator > (Colors c1, Colors c2);
+	virtual ~Colors(){};	
 };
 
-struct PointLight
+class Lights
 {
-	vec3 pos;
-	LightColor color;
+public:
+	Lights(int directionFlag, vec3 dirorpos, Colors lgtColor);
+	vec3 directionorpos;
+	Colors lightColor;
 	float attenuationcoeffs[3];
 	float attenuation;
+	int dirFlag;
+	float calculateAttenuation(float constatt, float linearatt,float quadatt, float distance);
+	~virtual Lights(){};
 };
 
-std::vector<PointLight> pointLightList;
-std::vector<DirectionalLight> dirLightList;
+std::vector<Lights> LightList;
 
-float calculateAttenuation(float constatt, float linearatt,float quadatt, float distance);
+
