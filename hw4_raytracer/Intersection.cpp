@@ -3,6 +3,7 @@
 Intersect::Intersect() {
 	rayOrigin = vec3(0.0f, 0.0f, 0.0f);
 	rayDirection =  vec3(0.0f, 0.0f, 0.0f);
+	normal = vec3(0.0f, 0.0f, 0.0f);
 	t = 0.0f;
 }
 

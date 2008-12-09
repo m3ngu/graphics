@@ -1,7 +1,7 @@
-#include <stdio.h>
+#include<stdio.h>
+#include "Material.h"
 #include "nv/nv_math.h"
 #include "Intersection.h"
-#include "Material.h"
 
 static float absolute(float num);
 static float const err = 0.0000001;
@@ -17,7 +17,9 @@ class obj
 public:
 	obj(){};
 	virtual ~obj(){};
+	mat4 TransformMatrix;
 	virtual bool intersect(vec3&, vec3&, Intersect *intObj) = 0;
+	virtual void getNormal(vec3& normal, vec3 intersectPoint) = 0;
 	Material mat;
 	shape_type type;
 	bool debug;
@@ -43,6 +45,7 @@ public:
 
 	//overide the base class method
 	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual void getNormal(vec3& normal, vec3 intersectPoint);
 	virtual ~quad() {};
 
 };
@@ -51,14 +54,15 @@ public:
 class triangle : public obj
 {
 private:
-  vec3 A, B, C;
-  float err;
-  static const int TEST_CULL = 1;
+	vec3 A, B, C;
+	float err;
+	static const int TEST_CULL = 1;
 public:
-  triangle(){};
-  triangle(vec3, vec3, vec3);
-  virtual bool intersect(vec3&, vec3&, Intersect *intObj);
-  virtual ~triangle() {};
+	triangle(){};
+	triangle(vec3, vec3, vec3);
+	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual void getNormal(vec3& normal, vec3 intersectPoint);
+	virtual ~triangle() {};
 };
 
 
@@ -74,5 +78,6 @@ public:
 	sphere(float,vec3);
 	//overide the base class method
 	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual void getNormal(vec3& normal, vec3 intersectPoint);
 	virtual ~sphere() {};
 };

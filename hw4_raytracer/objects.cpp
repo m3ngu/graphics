@@ -9,6 +9,10 @@ sphere:: sphere(float r, vec3 c)
 	radius2 = r*r;
 }
 
+void sphere::getNormal(vec3& normal,vec3 intersectPoint)
+{
+	normal = (intersectPoint - center)/(float)radius;
+}
 //Refer example 1
 //TODO:: Figure out what is being done in the last 3 lines and the texture part
 
@@ -24,11 +28,12 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 		//check if the discriminant is negative, if it is then return false, otherwise compute 
 		//intersectionPosition and the rest
 		double discriminant = (b*b) - (4*a*c);
-		
+
 		if(discriminant < 0.0)
 			return false;
 		else //find the intersection point
 		{	
+			//printf("Comes here and some color shud've been added\n");
 			double t1 = (-b + sqrt(discriminant))/(2*a);
 			double t2 = (-b - sqrt(discriminant))/(2*a);	
 
@@ -36,7 +41,7 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 				tempt = t1;
 			else
 				tempt = t2;
-				
+
 			if (debug) printf("Debug: Sphere intersection! tempt=%f, t=%f\n",tempt, intObj->t);
 
 			if( tempt < intObj->t && tempt > 0.0001f)
@@ -44,12 +49,13 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 				intObj->t = tempt;
 				intObj->mat = &mat;
 				intObj->setPoint();
+				intObj->finalObject = this;
+				getNormal(intObj->normal, intObj->Point);
 			}
 			return true;
 		}
 
 }
-
 quad:: quad(vec3 A, vec3 B, vec3 C, vec3 D)  
 {
 	debug = false;
@@ -86,7 +92,14 @@ quad:: quad(vec3 A, vec3 B, vec3 C, vec3 D)
 	}
 }
 
+void quad::getNormal(vec3& normal, vec3 intersectPoint)
+{
+	vec3 E01 = V10 - V00;
+	vec3 E03 = V01 - V00;
 
+	cross(normal, E01, E03);
+	normal.normalize();
+}
 bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 {
 	vec3 P;
@@ -149,10 +162,12 @@ bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 		intObj->t = t1;
 		intObj->mat = &mat;
 		intObj->setPoint();
+		intObj->finalObject = this;
+		getNormal(intObj->normal, intObj->Point);
 	} else {
 		return false;
 	}
-	
+
 	//Compute the bilinear coordinates of the intersection point
 	if(absolute(a11-1) < err) {
 		u = a;
@@ -198,7 +213,15 @@ triangle::triangle(vec3 P, vec3 Q, vec3 R)
 	B = Q;
 	C = R;
 }
+void triangle::getNormal(vec3& normal, vec3 intersectPoint)
+{
+	vec3 BA, CA;
 
+    BA = B - A;
+	CA = C - A;
+    cross(normal, BA, CA);
+	normal.normalize();
+}
 bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 {
 	/*find vectors for two edges sharing vert0*/
@@ -249,6 +272,8 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 			intObj->t = tempt;
 			intObj->mat = &mat;
 			intObj->setPoint();
+			intObj->finalObject = this;
+			getNormal(intObj->normal, intObj->Point);
 		}
 		
 		return true;

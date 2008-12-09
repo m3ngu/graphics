@@ -1,17 +1,20 @@
 #include<stdio.h>
-#include "nv/nv_math.h"
 #include "Material.h"
+#include "nv/nv_math.h"
 
 class Intersect {
-private:
-	vec3 Point;
+
 public:
 	double t;
+	vec3 Point;
 	vec3 rayOrigin;
 	vec3 rayDirection;
+	vec3 normal;
 	Material* mat;
+	obj currobject;
 	Intersect();
 	Intersect(vec3 origin, vec3 direction, double tmax);
 	void setPoint();
+	void setNormal();
 	virtual ~Intersect() {};
 };

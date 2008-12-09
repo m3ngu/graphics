@@ -8,7 +8,9 @@
 #include "nv/nv_algebra.h"
 #include "Camera.h"
 #include "objects.h"
-#include <vector>
+#include "Stack.h"
+#include "MatrixTransformation.h"
+#include<vector>
 
 struct Vertex {
   double pos[3] ;
@@ -38,7 +40,8 @@ class Scene {
 	mat4 modelViewMatrix;
 
   public:
-	
+  
+	StackObject *stck;
 	// Constructor / Deconstructor
 	Scene ();
 	~Scene ();

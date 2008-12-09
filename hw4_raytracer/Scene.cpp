@@ -2,10 +2,7 @@
  *  parser.cpp
  *
  */
-
 #include "Scene.h"
-#include "nv/nv_math.h"
-#include "nv/nv_algebra.h"
 
 // This is the main function that defines the scene.  
 // For the most part, just read a line and do the appropriate thing.
@@ -21,6 +18,8 @@ Scene::Scene() {
 
 	maxdepth = 5 ;
 	lightnum = 0 ;
+
+	stck = new StackObject();
 }
 
 Scene::~Scene() {
@@ -69,7 +68,7 @@ void Scene::parsefile (FILE *fp) {
 	
 	char line[1000], command[1000] ; // Very bad to prefix array size :-)
 	Material currMat;
-		
+	
 	while (!feof(fp)) {
 		fgets(line,sizeof(line),fp) ;
 		if (feof(fp)) break ;
@@ -132,7 +131,6 @@ void Scene::parsefile (FILE *fp) {
 			float radius; // Syntax is sphere x y z radius 
 			double pos[3];
 			int num = sscanf(line, "%s %lf %lf %lf %f", command, pos, pos+1, pos+2, &radius);
-			//printf("sphere %lf %lf %lf %f\n", pos[0],pos[1],pos[2], radius);
 			if (num != 5) {
 				fprintf(stderr, "sphere x y z radius\n");
 				exit(1);
@@ -142,7 +140,7 @@ void Scene::parsefile (FILE *fp) {
 			
 			obj* o = new sphere(rad,center);
 			o->mat = Material(currMat);
-			
+			o->TransformMatrix = stck->getTopofStack();
 			objects.push_back(o);
 		}
 		
@@ -217,16 +215,17 @@ void Scene::parsefile (FILE *fp) {
 			
 			obj* o = new triangle(A,B,C);
 			o->mat = Material(currMat);
-			
+			o->TransformMatrix = stck->getTopofStack();
 			objects.push_back(o);
 			
 			/*
 			double vertex[3][3] ;
 			double normal[3] ;
+
 			for (i = 0 ; i < 3 ; i++) 
 				for (j = 0 ; j < 3 ; j++)
 					vertex[i][j] = vert[pts[i]].pos[j] ;
-			
+
 			// Calculate the face normal 
 			double vec1[3], vec2[3], vec3[3] ;
 			for (i = 0 ; i < 3 ; i++) {
@@ -292,9 +291,9 @@ void Scene::parsefile (FILE *fp) {
 			
 			obj* o = new quad(A,B,C,D);
 			o->mat = Material(currMat);
-			
+			o->TransformMatrix = stck->getTopofStack();
 			objects.push_back(o);
-			
+
 			/****
 			double vertex[3][3] ;
 			double normal[3] ;
@@ -347,6 +346,11 @@ void Scene::parsefile (FILE *fp) {
 			double x,y,z ; // Translate by x y z as in standard OpenGL
 			
 			int num = sscanf(line, "%s %lf %lf %lf",command, &x, &y, &z) ;
+			vec3 translatevec = vec3(x,y,z);
+			MatrixTransforms mobj;
+			mat4 translate;
+			mobj.getTranslate(translatevec, translate);
+			stck->pushElement(translate);
 			if (num != 4) {
 				fprintf(stderr, "translate x y z\n") ;
 				exit(1) ;
@@ -359,6 +363,11 @@ void Scene::parsefile (FILE *fp) {
 			double ang, x,y,z ; // Rotate by an angle about axis x y z as in standard OpenGL
 			
 			int num = sscanf(line, "%s %lf %lf %lf %lf",command, &x, &y, &z, &ang) ;
+			vec3 rotatevec = vec3(x,y,z);
+			MatrixTransforms mobj;
+			mat4 rotate;
+			mobj.getRotate(rotatevec,ang, rotate);
+			stck->pushElement(rotate);
 			if (num != 5) {
 				fprintf(stderr, "rotate angle x y z\n") ;
 				exit(1) ;
@@ -371,6 +380,12 @@ void Scene::parsefile (FILE *fp) {
 			double x,y,z ; // Scale by x y z as in standard OpenGL
 			
 			int num = sscanf(line, "%s %lf %lf %lf",command, &x, &y, &z) ;
+			vec3 scalevec = vec3(x,y,z);
+			MatrixTransforms mobj;
+			mat4 scale;
+			mobj.getScale(scalevec,scale);
+			stck->pushElement(scale);
+
 			if (num != 4) {
 				fprintf(stderr, "scale x y z\n") ;
 				exit(1) ;
@@ -381,11 +396,15 @@ void Scene::parsefile (FILE *fp) {
 		
 		else if (!strcmp(command, "pushTransform")) {
 			// Push the current matrix on the stack as in OpenGL
+			int success = stck->push();
+			if(success < 0)
+				printf("Maximum size of stack is reached\n");
 		}
 		
 		// *******************  PopTransform *******************
 		
 		else if (!strcmp(command, "popTransform")) {
+			stck->pop();
 			// Pop the current matrix as in OpenGL
 		}
 		
