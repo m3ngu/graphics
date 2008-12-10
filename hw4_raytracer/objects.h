@@ -31,7 +31,7 @@ public:
 	virtual ~obj(){};
 	virtual bool intersect(vec3&, vec3&, Intersect *intObj) = 0;
 	virtual void getNormal(vec3& normal, vec3 intersectPoint) = 0;
-	mat4 TransformMatrix;
+	mat4 TransformMatrix, TransformMatrixInv, TransformMatrixInvTranspose;
 	Material mat;
 	shape_type type;
 	bool debug;

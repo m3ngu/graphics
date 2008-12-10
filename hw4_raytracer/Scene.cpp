@@ -144,6 +144,8 @@ void Scene::parsefile (FILE *fp) {
 			obj* o = new sphere(rad,center);
 			o->mat = Material(currMat);
 			o->TransformMatrix = stck->getTopofStack();
+			invert(o->TransformMatrixInv, o->TransformMatrix);
+			transpose(o->TransformMatrixInvTranspose, o->TransformMatrixInv);
 			objects.push_back(o);
 		}
 		
@@ -219,6 +221,8 @@ void Scene::parsefile (FILE *fp) {
 			obj* o = new triangle(A,B,C);
 			o->mat = Material(currMat);
 			o->TransformMatrix = stck->getTopofStack();
+			invert(o->TransformMatrixInv, o->TransformMatrix);
+			transpose(o->TransformMatrixInvTranspose, o->TransformMatrixInv);
 			objects.push_back(o);
 			
 			/*
@@ -295,6 +299,8 @@ void Scene::parsefile (FILE *fp) {
 			obj* o = new quad(A,B,C,D);
 			o->mat = Material(currMat);
 			o->TransformMatrix = stck->getTopofStack();
+			invert(o->TransformMatrixInv, o->TransformMatrix);
+			transpose(o->TransformMatrixInvTranspose, o->TransformMatrixInv);
 			objects.push_back(o);
 
 			/****

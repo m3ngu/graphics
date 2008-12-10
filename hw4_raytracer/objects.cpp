@@ -15,16 +15,29 @@ sphere:: sphere(float r, vec3 c)
 
 void sphere::getNormal(vec3& normal,vec3 intersectPoint)
 {
-	normal = (intersectPoint - center)/(float)radius;
+	normal = (intersectPoint - center); // / (float)radius;
+	normal.normalize();
 }
 //Refer example 1
 //TODO:: Figure out what is being done in the last 3 lines and the texture part
 
-bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
+bool sphere::intersect(vec3& org, vec3& dir, Intersect *intObj)
 {
+	
+	vec3 origin, direction;
+	
+	MatrixTransforms mobj;
+	
+	mobj.getVector(org, TransformMatrixInv, origin, 0);
+	mobj.getVector(dir, TransformMatrixInv, direction, 1);
+
 	//direction.normalize();
+	
 	// Vector from origin of Ray to center of sphere
 	vec3 dist = origin - center;
+	
+	if (debug) printf("Debug: dist [%f, %f, %f]\n", dist.x, dist.y, dist.z);
+	
 	double a = dot(direction, direction);
 	double b = 2*(dist.x*direction.x + dist.y*direction.y + dist.z*direction.z);
 	double c = dot(dist,dist) - radius2;
@@ -39,22 +52,65 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 		{	
 			//printf("Comes here and some color shud've been added\n");
 			double t1 = (-b + sqrt(discriminant))/(2*a);
-			double t2 = (-b - sqrt(discriminant))/(2*a);	
+			double t2 = (-b - sqrt(discriminant))/(2*a);
 
 			if( t1 < t2)
 				tempt = t1;
 			else
 				tempt = t2;
+				
+			if (debug) printf("Debug: t1=%f, t2=%f, tempt=%f\n", t1, t2, tempt);
 
-			if (debug) printf("Debug: Sphere intersection! tempt=%f, t=%f\n",tempt, intObj->t);
+			//if (debug) printf("Debug: Sphere intersection! tempt=%f, t=%f\n",tempt, intObj->t);
 
 			if( tempt < intObj->t && tempt > 0.0001f)
 			{
 				intObj->t = tempt;
 				intObj->mat = &mat;
-				intObj->setPoint();
+				intObj->setPoint(origin, direction);
 				//intObj->finalObject = this;
 				getNormal(intObj->normal, intObj->Point);
+				
+				if (debug) printf("Debug: Original Org [%f, %f, %f]\n", org.x, org.y, org.z);
+				if (debug) printf("Debug: Original Dir [%f, %f, %f]\n", dir.x, dir.y, dir.z);
+				if (debug) printf("Debug: Transform Org [%f, %f, %f]\n", origin.x, origin.y, origin.z);
+				if (debug) printf("Debug: Transform Dir [%f, %f, %f]\n", direction.x, direction.y, direction.z);
+				
+				if (debug) printf("Debug: Point  [%f, %f, %f]\n", (intObj->Point).x, (intObj->Point).y, (intObj->Point).z);
+				if (debug) printf("Debug: Normal [%f, %f, %f]\n", (intObj->normal).x, (intObj->normal).y, (intObj->normal).z);
+				
+				intObj->applyTransform(TransformMatrix);
+				intObj->applyTransformToNormal(TransformMatrixInvTranspose);
+				
+				if (debug) printf("Debug: Point  [%f, %f, %f]\n", (intObj->Point).x, (intObj->Point).y, (intObj->Point).z);
+				if (debug) printf("Debug: Normal [%f, %f, %f]\n", (intObj->normal).x, (intObj->normal).y, (intObj->normal).z);
+				
+				
+				if (debug) {
+					printf("Transform:\n");
+					printf("%f, %f, %f, %f\n", TransformMatrix[0][0], TransformMatrix[0][1], TransformMatrix[0][2], TransformMatrix[0][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrix[1][0], TransformMatrix[1][1], TransformMatrix[1][2], TransformMatrix[1][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrix[2][0], TransformMatrix[2][1], TransformMatrix[2][2], TransformMatrix[2][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrix[3][0], TransformMatrix[3][1], TransformMatrix[3][2], TransformMatrix[3][3]);
+				}
+				
+				if (debug) {
+					printf("TransformMatrixInv:\n");
+					printf("%f, %f, %f, %f\n", TransformMatrixInv[0][0], TransformMatrixInv[0][1], TransformMatrixInv[0][2], TransformMatrixInv[0][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInv[1][0], TransformMatrixInv[1][1], TransformMatrixInv[1][2], TransformMatrixInv[1][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInv[2][0], TransformMatrixInv[2][1], TransformMatrixInv[2][2], TransformMatrixInv[2][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInv[3][0], TransformMatrixInv[3][1], TransformMatrixInv[3][2], TransformMatrixInv[3][3]);
+				}
+				
+				if (debug) {
+					printf("TransformMatrixInvTranspose:\n");
+					printf("%f, %f, %f, %f\n", TransformMatrixInvTranspose[0][0], TransformMatrixInvTranspose[0][1], TransformMatrixInvTranspose[0][2], TransformMatrixInvTranspose[0][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInvTranspose[1][0], TransformMatrixInvTranspose[1][1], TransformMatrixInvTranspose[1][2], TransformMatrixInvTranspose[1][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInvTranspose[2][0], TransformMatrixInvTranspose[2][1], TransformMatrixInvTranspose[2][2], TransformMatrixInvTranspose[2][3]);
+					printf("%f, %f, %f, %f\n", TransformMatrixInvTranspose[3][0], TransformMatrixInvTranspose[3][1], TransformMatrixInvTranspose[3][2], TransformMatrixInvTranspose[3][3]);
+				}
+				
+				
 			}
 			return true;
 		}
@@ -108,8 +164,16 @@ void quad::getNormal(vec3& normal, vec3 intersectPoint)
 	normal = surf_normal;
 }
 
-bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
+bool quad::intersect(vec3& org, vec3& dir, Intersect *intObj)
 {
+
+	vec3 origin, direction;
+
+	MatrixTransforms mobj;
+	
+	mobj.getVector(org, TransformMatrixInv, origin, 0);
+	mobj.getVector(dir, TransformMatrixInv, direction, 1);
+
 	vec3 P;
 	float u, v;
 	cross(P,direction,E03); //getting the point of intersection with the plane.
@@ -164,14 +228,16 @@ bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 	//Compute the ray parameter of the intersection point
 	float t1 = dot(E03,Q)/det;
 	
-	if (debug) printf("Debug: Quad intersection! t1=%f, t=%f\n",t1, intObj->t);
+	//if (debug) printf("Debug: Quad intersection! t1=%f, t=%f\n",t1, intObj->t);
 	
 	if(t1 > 0 && t1 < intObj->t) {
 		intObj->t = t1;
 		intObj->mat = &mat;
-		intObj->setPoint();
+		intObj->setPoint(origin, direction);
 		//intObj->finalObject = this;
 		getNormal(intObj->normal, intObj->Point);
+		intObj->applyTransform(TransformMatrix);
+		intObj->applyTransformToNormal(TransformMatrixInvTranspose);
 	} else {
 		return false;
 	}
@@ -266,8 +332,16 @@ void triangle::getNormal(vec3& normal, vec3 intersectPoint)
 	}
 }
 
-bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
+bool triangle::intersect(vec3 &org, vec3 &dir, Intersect *intObj)
 {
+
+	vec3 origin, direction;
+
+	MatrixTransforms mobj;
+	
+	mobj.getVector(org, TransformMatrixInv, origin, 0);
+	mobj.getVector(dir, TransformMatrixInv, direction, 1);
+
 	/*find vectors for two edges sharing vert0*/
 	vec3 edge1 = B - A;
 	vec3 edge2 = C - A;
@@ -279,7 +353,7 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 	/*If determinant is near zero, ray lies in the plane of the triangle*/
 	double det = dot(edge1, pvec);
 	
-	if (debug) printf("Debug: Triangle det=%f\n",det);
+	//if (debug) printf("Debug: Triangle det=%f\n",det);
 	
 	/*If we want to cull the back faces of triangle*/
 	if(TEST_CULL)
@@ -311,15 +385,17 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 		double inv_det = 1.0/det;
 		tempt *= inv_det;
 		
-		if (debug) printf("Debug: Triangle intersection! tempt=%f, t=%f\n",tempt, intObj->t);
+		//if (debug) printf("Debug: Triangle intersection! tempt=%f, t=%f\n",tempt, intObj->t);
 		
 		if( tempt < intObj->t && tempt > 0.0001f)
 		{
 			intObj->t = tempt;
 			intObj->mat = &mat;
-			intObj->setPoint();
+			intObj->setPoint(origin, direction);
 			//intObj->finalObject = this;
 			getNormal(intObj->normal, intObj->Point);
+			intObj->applyTransform(TransformMatrix);
+			intObj->applyTransformToNormal(TransformMatrixInvTranspose);
 		}
 		
 		return true;

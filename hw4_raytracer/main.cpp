@@ -10,62 +10,83 @@ Scene *s;
 vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height);
 bool debugPixel(int x, int y);
 
-void getVector(vec3 givenVector, mat4 transformMatrix, vec3 & outputVector, int dirflag) {
-	vec4 homoVector;
-	if(dirflag == 0)
-		homoVector = vec4(givenVector.x,givenVector.y,givenVector.z,1);
-	else
-		homoVector = vec4(givenVector.x,givenVector.y,givenVector.z,0);
-
-	vec4 newVector = transformMatrix * homoVector;
-	outputVector = vec3(newVector.x,newVector.y,newVector.z);
-}
-
 //gloAmb is defined in Scene.cpp which is a LightColor object
 void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor) {
-	//Convert the emission property into a LightColor object with r,g and b
+	
+	// =========================
+	//    AMBIENT + EMMISSION
+	// =========================
+	
 	finalColor = s->ambient + intObject->mat->emission;
-	for(unsigned int i = 0; i < s->LightList.size(); i++)
-	{
-		//Get the current PointLight variable
+	
+	// ~~~~~~~~~~~~~~~~~~~~~
+	//    For each light
+	// ~~~~~~~~~~~~~~~~~~~~~
+	
+	for (int i = 0; i < s->LightList.size(); i++) {
+		
 		Lights* light = s->LightList[i];
 		
-		//Check if its a direction light or a positional light using dirflag = 1 
-		//for directional and 0 for positional
+		// Calculate the light direction
 		vec3 lightdirection;
-		//Calculate the light direction
-		if(light->dirFlag == 0)
-		{			
-			lightdirection = (light->directionorpos) - (intObject->Point);				
-		}
-		else
-		{
+		
+		// Check if its a direction light or a positional light using dirflag = 1 
+		// for directional and 0 for positional
+		if(light->dirFlag == 0) {			
+			lightdirection =  (light->directionorpos) - (intObject->Point); // TODO: Check this
+			lightdirection.normalize();
+		} else {
 			lightdirection = light->directionorpos;
 		}
-		lightdirection.normalize();
+		
+		// Check whether the light source is behind the object
+		double cosTheta = dot(intObject->normal, lightdirection);
+		
+		if (intObject->debug) {
+			printf("Debug: cosTheta=%f\n", cosTheta);
+		}
+		
+		
+		if (cosTheta <= 0) continue;
+		
+		// Check for Shadow
+		
+		
+		// =====================
+		//    SPECULAR
+		// =====================
 
-		/*******To Calculate the halfway vector using blinnphong model*******/
 		//The viewing direction
 		vec3 viewVec = eyePoint - intObject->Point;
 		viewVec.normalize();
-		//The halfway vector
-		vec3 halfAngle = vec3((viewVec.x + lightdirection.x)/2.0, (viewVec.y + lightdirection.y)/2.0, (viewVec.z + lightdirection.z)/2.0 );
+		
+		//The halfway vector (blinn-phong model)
+		vec3 halfAngle = vec3((viewVec.x + lightdirection.x)/2.0,
+							  (viewVec.y + lightdirection.y)/2.0,
+							  (viewVec.z + lightdirection.z)/2.0);
 		halfAngle.normalize();
 		
-		double specularity = (double) pow((double)(dot(intObject->normal,halfAngle)), (double)intObject->mat->shininess);
+		double specularity = (double) pow((double)(dot(intObject->normal, halfAngle)), (double)intObject->mat->shininess);
 		specularity = specularity > 0 ? specularity : 0;
 		Colors specularColor = intObject->mat->specular * specularity;
-		/************************************************************************/
-
-		/*****To calculate the diffuse component using the Lambertian model******/
-		double diffuse = dot(intObject->normal,lightdirection);
-		diffuse = diffuse > 0 ? diffuse : 0;
-		Colors diffuseColor = intObject->mat->diffuse * diffuse;
-		/************************************************************************/
+		
+		// =====================
+		//    DIFFUSE
+		// =====================
+		
+		Colors diffuseColor = intObject->mat->diffuse * cosTheta;
+		
+		// Add Light's Color x (Specular + Diffuse) to the overall color
+		
 		Colors lightColor = light->lightColor * ( specularColor + diffuseColor );
 		finalColor = finalColor + lightColor;
 	}
+	
+	if (intObject->debug) {
+		printf("Debug: finalColor r=%f, g=%f, b=%f\n", finalColor.r, finalColor.g, finalColor.b);
+	}
 }
+
 int main (int argc, char * const argv[]) {
     
 	if (argc != 2) {
@@ -129,28 +150,20 @@ int main (int argc, char * const argv[]) {
 			for(int k = 0; k < s->objects.size(); k++) {
 				
 				s->objects[k]->debug = debugPixel(x,y);
-				
+				/*
 				if (debugPixel(x,y)) {
 					printf("Debug: Shape: %i, type=%i, t=%f\n",k, s->objects[k]->type, intersection->t);
 				}
-				mat4 transform = s->objects[k]->TransformMatrix;
-				mat4 inverseTransform = invert(inverseTransform,transform);
-				vec3 neworg, newdir;
-				getVector(origin,inverseTransform,neworg,0);
-				getVector(ray,inverseTransform,newdir,1);
-
-				if (s->objects[k]->intersect(neworg, newdir, intersection))
-				{
+				*/
+				if (s->objects[k]->intersect(origin, ray, intersection)) {
 					hits++;
-					vec3 pt;
-					getVector(intersection->Point,transform,pt,0);
 				}
 				
 			}
 			
 			if (hits > 0) {
 				//printf("Comes here\n");
-				
+				intersection->debug = debugPixel(x,y);
 				rayColor(intersection->rayOrigin, intersection, 10, finalColor);
 				
 				//printf("Debug: R: %f, G: %f, B:%f\n", finalColor.r, finalColor.g, finalColor.b);
@@ -183,6 +196,11 @@ int main (int argc, char * const argv[]) {
 						
 				}
 				*/
+				
+				if (finalColor.r > 1.0) finalColor.r = 1.0;
+				if (finalColor.g > 1.0) finalColor.g = 1.0;
+				if (finalColor.b > 1.0) finalColor.b = 1.0;
+				
 				outImg->setPixel(y, x, (int)(finalColor.r * 255.0f),
 									   (int)(finalColor.g * 255.0f),
 									   (int)(finalColor.b * 255.0f));
@@ -255,7 +273,7 @@ vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height) {
 }
 
 bool debugPixel(int x, int y) {
-	if (x == 320 && y == 277) return true;
-	if (x == 263 && y == 277) return true;
+	if (x == 218 && y == 121) return true;
+	//if (x == 263 && y == 277) return true;
 	return false;
 }

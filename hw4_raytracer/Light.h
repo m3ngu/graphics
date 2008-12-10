@@ -107,6 +107,7 @@ inline Lights::Lights(int directionFlag, vec3 dirorpos, Colors lgtColor) {
 	attenuation = Attenuation();
 	lightColor = lgtColor;
 	directionorpos = dirorpos;
+	directionorpos.normalize();
 }
 
 inline float Lights::calculateAttenuation(float distance)
