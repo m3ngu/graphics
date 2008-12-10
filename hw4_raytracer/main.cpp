@@ -1,7 +1,8 @@
 
 #include <iostream>
-#include "Scene.h"
 #include "Image.h"
+#include "Scene.h"
+#include "Light.h"
 
 FILE *inputfile, *outputfile;;
 Scene *s;
@@ -23,23 +24,23 @@ void getVector(vec3 givenVector, mat4 transformMatrix, vec3 & outputVector, int 
 //gloAmb is defined in Scene.cpp which is a LightColor object
 void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor) {
 	//Convert the emission property into a LightColor object with r,g and b
-	finalColor = /*gloAmb +*/ intObject->mat->emission;
-	for(unsigned int i = 0; i < LightList.size(); i++)
+	finalColor = s->ambient + intObject->mat->emission;
+	for(unsigned int i = 0; i < s->LightList.size(); i++)
 	{
 		//Get the current PointLight variable
-		Lights light = LightList[i];
+		Lights* light = s->LightList[i];
 		
 		//Check if its a direction light or a positional light using dirflag = 1 
 		//for directional and 0 for positional
 		vec3 lightdirection;
 		//Calculate the light direction
-		if(light.dirFlag == 0)
+		if(light->dirFlag == 0)
 		{			
-			lightdirection = (light.directionorpos)- (intObject->Point);				
+			lightdirection = (light->directionorpos) - (intObject->Point);				
 		}
 		else
 		{
-			lightdirection = light.directionorpos;
+			lightdirection = light->directionorpos;
 		}
 		lightdirection.normalize();
 
@@ -61,8 +62,7 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		diffuse = diffuse > 0 ? diffuse : 0;
 		Colors diffuseColor = intObject->mat->diffuse * diffuse;
 		/************************************************************************/
-		
-		Colors lightColor = light.lightColor*(specularColor+diffuseColor);
+		Colors lightColor = light->lightColor * ( specularColor + diffuseColor );
 		finalColor = finalColor + lightColor;
 	}
 }
@@ -107,6 +107,7 @@ int main (int argc, char * const argv[]) {
 	int y,x;
 	const double tmax = 20000.0;
 	Intersect *intersection = new Intersect();
+	Colors finalColor;
 	
 	for (y = 0 ; y < s->getSizeY() ; y++) {
 		for (x = 0 ; x < s->getSizeX() ; x++) {
@@ -149,10 +150,11 @@ int main (int argc, char * const argv[]) {
 			
 			if (hits > 0) {
 				//printf("Comes here\n");
-				Colors finalColor = Colors(1.0,1.0,1.0,1.0);
 				
-
 				rayColor(intersection->rayOrigin, intersection, 10, finalColor);
+				
+				//printf("Debug: R: %f, G: %f, B:%f\n", finalColor.r, finalColor.g, finalColor.b);
+				
 				/*
 				Material* m = intersection->mat;
 				if(m != NULL)
@@ -181,8 +183,10 @@ int main (int argc, char * const argv[]) {
 						
 				}
 				*/
-				outImg->setPixel(y, x, 255.0, 255.0, 255.0);
-				//outImg->setPixel(y, x, (int)r, (int)g, (int)b);
+				outImg->setPixel(y, x, (int)(finalColor.r * 255.0f),
+									   (int)(finalColor.g * 255.0f),
+									   (int)(finalColor.b * 255.0f));
+				
 			} else {
 				outImg->setPixel(y, x, 0, 0, 0);
 			}

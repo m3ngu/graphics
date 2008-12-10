@@ -1,6 +1,7 @@
-#include "Light.h"
 #ifndef _material_
 #define _material_
+
+#include "Light.h"
 
 struct Material {
 	Colors diffuse;
@@ -15,10 +16,12 @@ struct Material {
 	
 	// Copy material
 	Material(const Material& m) {
-		diffuse = m.diffuse;
-		specular = m.specular;
+		
+		diffuse = Colors(m.diffuse);
+		specular = Colors(m.specular);
 		shininess = m.shininess;
-		emission = m.emission;
+		emission = Colors(m.emission);
+		
 	}
 
 };

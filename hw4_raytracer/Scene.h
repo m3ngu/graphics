@@ -4,13 +4,11 @@
 
 #include <iostream>
 #include <math.h>
-#include "nv/nv_math.h"
-#include "nv/nv_algebra.h"
 #include "Camera.h"
-#include "objects.h"
+#include "objects.h" // Includes intersection -> Material -> Light
 #include "Stack.h"
 #include "MatrixTransformation.h"
-#include<vector>
+#include <vector>
 
 struct Vertex {
   double pos[3] ;
@@ -48,6 +46,9 @@ class Scene {
 
 	// List of objects (i.e. shapes/primitives) in the scene
     std::vector<obj*> objects;
+	std::vector<Lights*> LightList;
+	
+	Colors ambient;  // We implement ambient as color
 
 	mat4 Scene::lookAt(Camera *cam);
     void parsefile (FILE *fp);

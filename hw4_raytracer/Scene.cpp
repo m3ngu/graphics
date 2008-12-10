@@ -20,6 +20,8 @@ Scene::Scene() {
 	lightnum = 0 ;
 
 	stck = new StackObject();
+	
+	ambient = Colors(0.2f,0.2f,0.2f,1.0f);
 }
 
 Scene::~Scene() {
@@ -68,6 +70,7 @@ void Scene::parsefile (FILE *fp) {
 	
 	char line[1000], command[1000] ; // Very bad to prefix array size :-)
 	Material currMat;
+	Attenuation currAttenuation;
 	
 	while (!feof(fp)) {
 		fgets(line,sizeof(line),fp) ;
@@ -416,10 +419,15 @@ void Scene::parsefile (FILE *fp) {
 		// *******************  Directional *******************
 				
 		else if (!strcmp(command, "directional")) {
-			float direction[4], color[4] ; color[3] = 1.0 ; direction[3] = 0.0 ;
+			float direction[4], color[3]; direction[3] = 0.0 ;
 			int num = sscanf(line, "%s %f %f %f %f %f %f", command, direction, direction+1, direction+2, color, color+1, color+2) ;
 			assert(num == 7) ;
 			assert(lightnum >= 0);
+			
+			Lights* l = new Lights(1,
+								vec3(direction[0],direction[1],direction[2]),
+								Colors(color[0],color[1],color[2],1.0f));
+			LightList.push_back(l);
 			
 		}
 		
@@ -430,6 +438,13 @@ void Scene::parsefile (FILE *fp) {
 			int num = sscanf(line, "%s %f %f %f %f %f %f", command, direction, direction+1, direction+2, color, color+1, color+2) ;
 			assert(num == 7) ;
 			assert(lightnum >= 0) ;
+			
+			Lights* l = new Lights(0,
+								vec3(direction[0],direction[1],direction[2]),
+								Colors(color[0],color[1],color[2],1.0f));
+			l->attenuation = Attenuation(currAttenuation);
+			LightList.push_back(l);
+			
 		}
 		
 		// *******************  Attenuation *******************
@@ -441,14 +456,22 @@ void Scene::parsefile (FILE *fp) {
 			int num = sscanf(line, "%s %lf %lf %lf", command, attenuation, attenuation + 1, attenuation +2) ;
 			assert(num == 4) ;
 			assert(!strcmp(command, "attenuation")) ;
+			
+			currAttenuation.constant  = attenuation[0];
+			currAttenuation.linear    = attenuation[1];
+			currAttenuation.quadratic = attenuation[2];
 		}
 		// *******************  Ambient *******************
 		
 		else if (!strcmp(command, "ambient")) {
-			float ambient[4] ; ambient[3] = 1.0 ;
-			int num = sscanf(line, "%s %f %f %f", command, ambient, ambient+1, ambient+2) ;
+			float amb[3] ;
+			int num = sscanf(line, "%s %f %f %f", command, amb, amb+1, amb+2) ;
 			assert(num == 4) ;
 			assert(!strcmp(command, "ambient")) ;
+			
+			ambient.r = amb[0];
+			ambient.g = amb[1];
+			ambient.b = amb[2];
 		}
 		
 		// **************************************************
@@ -463,15 +486,12 @@ void Scene::parsefile (FILE *fp) {
 			assert(num == 4);
 			assert (!strcmp(command, "diffuse"));
 			
-			int i;
-			for (i = 0 ; i < 3 ; i++) {
-				currMat.diffuse[i] = diffuse[i];
-			}
+			currMat.diffuse = Colors(diffuse[0],diffuse[1],diffuse[2],1.0);
 			
 			//printf("Debug: diffuse r=%f g=%f b=%f\n",
-			//	currMat.diffuse[0],
-			//	currMat.diffuse[1],
-			//	currMat.diffuse[2]);
+			//	currMat.diffuse.r,
+			//	currMat.diffuse.g,
+			//	currMat.diffuse.b);
 		}
 		
 		// *******************  Specular *******************
@@ -482,10 +502,8 @@ void Scene::parsefile (FILE *fp) {
 			assert(num == 4) ;
 			assert (!strcmp(command, "specular")) ;
 			
-			int i;
-			for (i = 0 ; i < 3 ; i++) {
-				currMat.specular[i] = specular[i];
-			}
+			currMat.specular = Colors(specular[0],specular[1],specular[2],1.0);
+			
 		}
 		
 		// *******************  Shininess *******************
@@ -505,10 +523,7 @@ void Scene::parsefile (FILE *fp) {
 			int num = sscanf(line, "%s %f %f %f", command, emission, emission+1, emission+2) ;
 			assert(num == 4) ; assert (!strcmp(command, "emission")) ;
 			
-			int i;
-			for (i = 0 ; i < 3 ; i++) {
-				currMat.emission[i] = emission[i];
-			}
+			currMat.emission = Colors(emission[0],emission[1],emission[2],1.0);
 		}
 		
 		// *****************************************************

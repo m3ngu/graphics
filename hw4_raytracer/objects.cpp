@@ -1,5 +1,9 @@
 #include "objects.h"
 
+// =============================================================================
+//     SPHERE
+// =============================================================================
+
 sphere:: sphere(float r, vec3 c)
 {
 	debug = false;
@@ -49,13 +53,18 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 				intObj->t = tempt;
 				intObj->mat = &mat;
 				intObj->setPoint();
-				//intObj->currobject = this;
+				//intObj->finalObject = this;
 				getNormal(intObj->normal, intObj->Point);
 			}
 			return true;
 		}
 
 }
+
+// =============================================================================
+//     QUAD
+// =============================================================================
+
 quad:: quad(vec3 A, vec3 B, vec3 C, vec3 D)  
 {
 	debug = false;
@@ -71,35 +80,34 @@ quad:: quad(vec3 A, vec3 B, vec3 C, vec3 D)
 	E03 = V01 - V00;
 	E02 = V11 - V00;
 
-	cross(N, E01, E03);
-	//N.normalize(); //not sure right now!
-
+	cross(surf_normal, E01, E03);
+	//surf_normal.normalize(); //not sure right now!
+	
 	//To find a11 and b11 for optimization
-	if( (absolute(N.x) >= absolute(N.y)) && (absolute(N.x) >= absolute(N.z)) )
+	if( (absolute(surf_normal.x) >= absolute(surf_normal.y))
+	 && (absolute(surf_normal.x) >= absolute(surf_normal.z)) )
 	{
-		a11 = (E02.y*E03.z - E02.z*E03.y)/N.x;
-		b11 = (E01.y*E02.z - E01.z*E02.y)/N.x;
+		a11 = (E02.y*E03.z - E02.z*E03.y)/surf_normal.x;
+		b11 = (E01.y*E02.z - E01.z*E02.y)/surf_normal.x;
 	}
-	else if( (absolute(N.y) >= absolute(N.x)) && (absolute(N.y) >= absolute(N.z)) )
+	else if( (absolute(surf_normal.y) >= absolute(surf_normal.x))
+	      && (absolute(surf_normal.y) >= absolute(surf_normal.z)) )
 	{
-		a11 = (E02.z*E03.x - E02.x*E03.z)/N.y;
-		b11 = (E01.z*E02.x - E01.x*E02.z)/N.y;
+		a11 = (E02.z*E03.x - E02.x*E03.z)/surf_normal.y;
+		b11 = (E01.z*E02.x - E01.x*E02.z)/surf_normal.y;
 	}
 	else
 	{
-		a11 = (E02.x*E03.y - E02.y*E03.x)/N.z;
-		b11 = (E01.x*E02.y - E01.y*E02.x)/N.z;
+		a11 = (E02.x*E03.y - E02.y*E03.x)/surf_normal.z;
+		b11 = (E01.x*E02.y - E01.y*E02.x)/surf_normal.z;
 	}
 }
 
 void quad::getNormal(vec3& normal, vec3 intersectPoint)
 {
-	vec3 E01 = V10 - V00;
-	vec3 E03 = V01 - V00;
-
-	cross(normal, E01, E03);
-	normal.normalize();
+	normal = surf_normal;
 }
+
 bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 {
 	vec3 P;
@@ -162,7 +170,7 @@ bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 		intObj->t = t1;
 		intObj->mat = &mat;
 		intObj->setPoint();
-//		intObj->currobject = this;
+		//intObj->finalObject = this;
 		getNormal(intObj->normal, intObj->Point);
 	} else {
 		return false;
@@ -205,23 +213,59 @@ bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 	
 }
 
+// =============================================================================
+//     TRIANGLE
+// =============================================================================
+
 triangle::triangle(vec3 P, vec3 Q, vec3 R)
 {
 	debug = false;
 	type = TRIANGLE;
+	ntype = SURFACE;
+	
 	A = P;
 	B = Q;
 	C = R;
-}
-void triangle::getNormal(vec3& normal, vec3 intersectPoint)
-{
+	
+	u = 0.0f;
+	v = 0.0f;
+	
 	vec3 BA, CA;
 
     BA = B - A;
 	CA = C - A;
-    cross(normal, BA, CA);
-	normal.normalize();
+    cross(surf_normal, BA, CA);
+	surf_normal.normalize();
+	
 }
+
+triangle::triangle(vec3 P, vec3 Q, vec3 R, vec3 NP, vec3 NQ, vec3 NR)
+{
+	triangle(P, Q, R);
+	
+	vert_normal[0] = NP;
+	vert_normal[1] = NQ;
+	vert_normal[2] = NR;
+}
+
+
+void triangle::getNormal(vec3& normal, vec3 intersectPoint)
+{
+	if (ntype == SURFACE) {
+	
+		normal = surf_normal;
+		
+	} else {
+		
+		vec3 interpolatedNormal = (1.0f-u-v) * vert_normal[0]
+										 + u * vert_normal[1]
+										 + v * vert_normal[2];
+		interpolatedNormal.normalize();
+		
+		normal = interpolatedNormal;
+	}
+}
+
 bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 {
 	/*find vectors for two edges sharing vert0*/
@@ -247,7 +291,8 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 		vec3 tvec = origin - A;
 
 		/*Calculate the u param and test bounds*/
-		float u = dot(tvec,pvec);
+		u = dot(tvec,pvec);
+		
 		if(u < 0.0 || u > det)
 			return false;
 
@@ -256,7 +301,8 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 		cross(qvec, tvec, edge1);
 
 		/*Calculate the v parameter and test bounds*/
-		float v = dot(direction,qvec);
+		v = dot(direction,qvec);
+		
 		if(v < 0.0 || (u + v) > det)
 			return false;
 
@@ -272,7 +318,7 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 			intObj->t = tempt;
 			intObj->mat = &mat;
 			intObj->setPoint();
-			//intObj->currobject = this;
+			//intObj->finalObject = this;
 			getNormal(intObj->normal, intObj->Point);
 		}
 		
