@@ -29,7 +29,7 @@ class obj
 public:
 	obj(){};
 	virtual ~obj(){};
-	virtual bool intersect(vec3&, vec3&, Intersect *intObj) = 0;
+	virtual bool intersect(vec3&, vec3&, Intersect *intObj, bool shadow) = 0;
 	virtual void getNormal(vec3& normal, vec3 intersectPoint) = 0;
 	mat4 TransformMatrix, TransformMatrixInv, TransformMatrixInvTranspose;
 	Material mat;
@@ -62,7 +62,7 @@ public:
 	//finds if the ray intersects the quadrilatral given, returning true or false
 
 	//overide the base class method
-	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual bool intersect(vec3&, vec3&, Intersect *intObj, bool shadow);
 	virtual void getNormal(vec3& normal, vec3 intersectPoint);
 	virtual ~quad() {};
 
@@ -88,7 +88,7 @@ public:
 	triangle(){};
 	triangle(vec3, vec3, vec3);
 	triangle(vec3, vec3, vec3, vec3, vec3, vec3);
-	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual bool intersect(vec3&, vec3&, Intersect *intObj, bool shadow);
 	virtual void getNormal(vec3& normal, vec3 intersectPoint);
 	virtual ~triangle() {};
 };
@@ -108,7 +108,7 @@ public:
 	// Creates a new quad using the 4 vertices
 	sphere(float,vec3);
 	//overide the base class method
-	virtual bool intersect(vec3&, vec3&, Intersect *intObj);
+	virtual bool intersect(vec3&, vec3&, Intersect *intObj, bool shadow);
 	virtual void getNormal(vec3& normal, vec3 intersectPoint);
 	virtual ~sphere() {};
 };

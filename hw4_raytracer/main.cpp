@@ -6,6 +6,7 @@
 
 FILE *inputfile, *outputfile;;
 Scene *s;
+const double tmax = 20000.0;
 
 vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height);
 bool debugPixel(int x, int y);
@@ -32,7 +33,7 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		
 		// Check if its a direction light or a positional light using dirflag = 1 
 		// for directional and 0 for positional
-		if(light->dirFlag == 0) {			
+		if (light->dirFlag == 0) {
 			lightdirection =  (light->directionorpos) - (intObject->Point); // TODO: Check this
 			lightdirection.normalize();
 		} else {
@@ -42,15 +43,46 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		// Check whether the light source is behind the object
 		double cosTheta = dot(intObject->normal, lightdirection);
 		
-		if (intObject->debug) {
-			printf("Debug: cosTheta=%f\n", cosTheta);
-		}
-		
+		if (intObject->debug) printf("Debug: cosTheta=%f\n", cosTheta);
 		
 		if (cosTheta <= 0) continue;
 		
-		// Check for Shadow
+		// ~~~~~~~~~~~~~~~~~~~~~
+		//    Check for Shadow
+		// ~~~~~~~~~~~~~~~~~~~~~
 		
+		vec3 origin = intObject->Point;
+		vec3 ray = lightdirection;
+		Intersect *intersection = new Intersect();
+		
+		if (intObject->debug) printf("Debug: Org [%f, %f, %f]\n", origin.x, origin.y, origin.z);
+		if (intObject->debug) printf("Debug: Ray [%f, %f, %f]\n", ray.x, ray.y, ray.z);
+		
+		
+		// For point lights, we need to check if there is an object closer than the light source 
+		if (light->dirFlag == 0) {
+			intersection->t = nv_norm(lightdirection);
+		} else {
+			intersection->t = tmax;
+		}
+		
+		if (intObject->debug) printf("Debug: t=%f\n", intersection->t);
+		
+		bool shadowed = false;
+		
+		for(int k = 0; k < s->objects.size(); k++) {
+			
+			shadowed = s->objects[k]->intersect(origin, ray, intersection, true);
+			// Stop checking rest of the objects
+			if (shadowed) {
+				if (intObject->debug) printf("Debug: Light Source=%i shadowed by object=%i (type=%i)\n",i,k,s->objects[k]->type);
+				break;
+			}
+		}
+		// Go on to the next light source
+		if (shadowed) {
+			continue;
+		}
 		
 		// =====================
 		//    SPECULAR
@@ -121,12 +153,11 @@ int main (int argc, char * const argv[]) {
 	outImg->setColors(255);
 	outImg->setSize(s->getSizeY(), s->getSizeX()); // Rows (=Y), Columns (=X)
 	
-	triangle tri[2];
-	tri[0] = triangle(vec3(-1,-1,0), vec3(1,-1,0), vec3(1,1,0));
-	tri[1] = triangle(vec3(-1,-1,0), vec3(1,1,0), vec3(-1,1,0));
+	//triangle tri[2];
+	//tri[0] = triangle(vec3(-1,-1,0), vec3(1,-1,0), vec3(1,1,0));
+	//tri[1] = triangle(vec3(-1,-1,0), vec3(1,1,0), vec3(-1,1,0));
 	
 	int y,x;
-	const double tmax = 20000.0;
 	Intersect *intersection = new Intersect();
 	Colors finalColor;
 	
@@ -155,7 +186,7 @@ int main (int argc, char * const argv[]) {
 					printf("Debug: Shape: %i, type=%i, t=%f\n",k, s->objects[k]->type, intersection->t);
 				}
 				*/
-				if (s->objects[k]->intersect(origin, ray, intersection)) {
+				if (s->objects[k]->intersect(origin, ray, intersection,false)) {
 					hits++;
 				}
 				
@@ -273,7 +304,7 @@ vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height) {
 }
 
 bool debugPixel(int x, int y) {
-	if (x == 218 && y == 121) return true;
-	//if (x == 263 && y == 277) return true;
+	//if (x == 90 && y == 105) return true;
+	if (x == 140 && y == 150) return true;
 	return false;
 }
