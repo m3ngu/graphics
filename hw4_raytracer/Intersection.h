@@ -11,7 +11,7 @@ public:
 	vec3 rayDirection;
 	vec3 normal;
 	Material* mat;
-	obj currobject;
+//	obj currobject;
 	Intersect();
 	Intersect(vec3 origin, vec3 direction, double tmax);
 	void setPoint();

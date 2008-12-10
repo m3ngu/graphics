@@ -2,8 +2,6 @@
 #include <iostream>
 #include "Scene.h"
 #include "Image.h"
-#include "Light.h"
-#include "Intersection.h"
 
 FILE *inputfile, *outputfile;;
 Scene *s;
@@ -23,40 +21,51 @@ void getVector(vec3 givenVector, mat4 transformMatrix, vec3 & outputVector, int 
 }
 
 //gloAmb is defined in Scene.cpp which is a LightColor object
-//void rayColor(Intersect *intObject, int depth, LightColor& finalColor) {
-//	//Convert the emission property into a LightColor object with r,g and b
-//	LightColor objectMatEmission = LightColor(intObject->mat->emission[0], intObject->mat->emission[1], intObject->mat->emission[2]);
-//	finalColor = gloAmb + objectMatEmission;
-//	for(unsigned int i = 0; i < pointLightList.size(); i++)
-//	{
-//		//Get the current PointLight variable
-//		PointLight light = pointLightList[i];
-//		//Calculate the light direction
-//		vec3 lightdirection = (light.pos)-intObject->Point;
-//		lightdirection.normalize();
-//		//Calculate the halfway vector for specular using blinnphong model
-//		vec3 halfway = (intObject->rayOrigin + lightdirection);
-//		halfway.normalize();
-//
-//		//If the object is not in shade : TODO.. then find the color
-//
-//		float d = distanceBetweenPoints(light.pos,hit.intersection.point);
-//
-//		float attenuatingfact = calculateAttenuation(pointLightList[i].attenuationcoeffs[0],pointLightList[i].attenuationcoeffs[1],pointLightList[i].attenuationcoeffs[2],d);
-//		RGBA diffuse_component;
-//		diffuse_component.r = min((attenuatingfact * hit.intersection.obj.mat.material_diffuse.r * max(dot(lightdirection,hit.normal),0.005)),1);
-//		diffuse_component.g = min((attenuatingfact * hit.intersection.obj.mat.material_diffuse.g * max(dot(lightdirection,hit.normal),0.005)),1);
-//		diffuse_component.b = min((attenuatingfact * hit.intersection.obj.mat.material_diffuse.b * max(dot(lightdirection,hit.normal),0.005)),1);
-//		diffuse_component.a = min((attenuatingfact * hit.intersection.obj.mat.material_diffuse.a * max(dot(lightdirection,hit.normal),0.005)),1);
-//		RGBA specular_component;
-//		specular_component.r = min((hit.intersection.obj.mat.material_specular.r * pow(dot(hit.normal, halfway),hit.intersection.obj.mat.shininess)),1);
-//		specular_component.g = min((hit.intersection.obj.mat.material_specular.g * pow(dot(hit.normal, halfway),hit.intersection.obj.mat.shininess)),1);
-//		specular_component.b = min((hit.intersection.obj.mat.material_specular.b * pow(dot(hit.normal, halfway),hit.intersection.obj.mat.shininess)),1);
-//		specular_component.a = min((hit.intersection.obj.mat.material_specular.a * pow(dot(hit.normal, halfway),hit.intersection.obj.mat.shininess)),1);
-//		RGBA color = pointLightList[i].color * (diffuse_component + specular_component);
-//		ray.color = ray.color + color;
-//	}
-//}
+void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor) {
+	//Convert the emission property into a LightColor object with r,g and b
+	finalColor = /*gloAmb +*/ intObject->mat->emission;
+	for(unsigned int i = 0; i < LightList.size(); i++)
+	{
+		//Get the current PointLight variable
+		Lights light = LightList[i];
+		
+		//Check if its a direction light or a positional light using dirflag = 1 
+		//for directional and 0 for positional
+		vec3 lightdirection;
+		//Calculate the light direction
+		if(light.dirFlag == 0)
+		{			
+			lightdirection = (light.directionorpos)- (intObject->Point);				
+		}
+		else
+		{
+			lightdirection = light.directionorpos;
+		}
+		lightdirection.normalize();
+
+		/*******To Calculate the halfway vector using blinnphong model*******/
+		//The viewing direction
+		vec3 viewVec = eyePoint - intObject->Point;
+		viewVec.normalize();
+		//The halfway vector
+		vec3 halfAngle = vec3((viewVec.x + lightdirection.x)/2.0, (viewVec.y + lightdirection.y)/2.0, (viewVec.z + lightdirection.z)/2.0 );
+		halfAngle.normalize();
+		
+		double specularity = (double) pow((double)(dot(intObject->normal,halfAngle)), (double)intObject->mat->shininess);
+		specularity = specularity > 0 ? specularity : 0;
+		Colors specularColor = intObject->mat->specular * specularity;
+		/************************************************************************/
+
+		/*****To calculate the diffuse component using the Lambertian model******/
+		double diffuse = dot(intObject->normal,lightdirection);
+		diffuse = diffuse > 0 ? diffuse : 0;
+		Colors diffuseColor = intObject->mat->diffuse * diffuse;
+		/************************************************************************/
+		
+		Colors lightColor = light.lightColor*(specularColor+diffuseColor);
+		finalColor = finalColor + lightColor;
+	}
+}
 int main (int argc, char * const argv[]) {
     
 	if (argc != 2) {
@@ -140,10 +149,10 @@ int main (int argc, char * const argv[]) {
 			
 			if (hits > 0) {
 				//printf("Comes here\n");
-				LightColor finalColor = LightColor(1.0,1.0,1.0,1.0);
+				Colors finalColor = Colors(1.0,1.0,1.0,1.0);
 				
 
-				//rayColor(intersection, 10, finalColor);
+				rayColor(intersection->rayOrigin, intersection, 10, finalColor);
 				/*
 				Material* m = intersection->mat;
 				if(m != NULL)

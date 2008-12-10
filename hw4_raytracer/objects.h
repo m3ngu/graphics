@@ -1,5 +1,4 @@
 #include<stdio.h>
-#include "Material.h"
 #include "nv/nv_math.h"
 #include "Intersection.h"
 

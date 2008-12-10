@@ -49,7 +49,7 @@ bool sphere::intersect(vec3& origin, vec3& direction, Intersect *intObj)
 				intObj->t = tempt;
 				intObj->mat = &mat;
 				intObj->setPoint();
-				intObj->finalObject = this;
+				//intObj->currobject = this;
 				getNormal(intObj->normal, intObj->Point);
 			}
 			return true;
@@ -162,7 +162,7 @@ bool quad :: intersect(vec3& origin, vec3& direction, Intersect *intObj)
 		intObj->t = t1;
 		intObj->mat = &mat;
 		intObj->setPoint();
-		intObj->finalObject = this;
+//		intObj->currobject = this;
 		getNormal(intObj->normal, intObj->Point);
 	} else {
 		return false;
@@ -272,7 +272,7 @@ bool triangle::intersect(vec3 &origin, vec3 &direction, Intersect *intObj)
 			intObj->t = tempt;
 			intObj->mat = &mat;
 			intObj->setPoint();
-			intObj->finalObject = this;
+			//intObj->currobject = this;
 			getNormal(intObj->normal, intObj->Point);
 		}
 		
