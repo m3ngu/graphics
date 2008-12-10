@@ -11,7 +11,12 @@ struct Colors
 	Colors();
 	Colors(float red, float green, float blue, float alpha);
 	Colors(const Colors& c);
-	virtual ~Colors(){};	
+	virtual ~Colors(){};
+	
+	bool operator==(const Colors & c) const
+    {
+        return (c.r == r && c.g == g && c.b == b) ? true : false;
+    }
 };
 
 inline Colors::Colors()
@@ -41,24 +46,24 @@ inline Colors::Colors(const Colors& c)
 inline const Colors operator*(const Colors& c1, const Colors& c2)
 {
 	return Colors(c1.r * c2.r,
-				  c1.b * c2.b,
 				  c1.g * c2.g,
+				  c1.b * c2.b,
 				  c1.a * c2.a);
 }
 
 inline const Colors operator+(const Colors& c1, const Colors& c2)
 {
 	return Colors(c1.r + c2.r,
-				  c1.b + c2.b,
 				  c1.g + c2.g,
+				  c1.b + c2.b,
 				  c1.a + c2.a);
 }
 
 inline const Colors operator*(const Colors& c1, const float f)
 {
 	return Colors(f * c1.r,
-				  f * c1.b,
 				  f * c1.g,
+				  f * c1.b,
 				  f * c1.a);
 }
 
@@ -107,7 +112,9 @@ inline Lights::Lights(int directionFlag, vec3 dirorpos, Colors lgtColor) {
 	attenuation = Attenuation();
 	lightColor = lgtColor;
 	directionorpos = dirorpos;
-	directionorpos.normalize();
+	if (dirFlag) {
+		directionorpos.normalize();
+	}
 }
 
 inline float Lights::calculateAttenuation(float distance)

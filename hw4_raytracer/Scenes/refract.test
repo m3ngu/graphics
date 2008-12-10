@@ -1,0 +1,120 @@
+# Test Scene 1 
+# A simple quad viewed from different camera positions
+
+size 800 600 
+
+output refract.ppm
+
+# Now specify the camera.  This is what you should implement.
+# This file has 4 camera positions.  Render your scene for all 4.
+
+#camera 0 0 4 0 0 0 0 1 0 30
+#camera 0 -3 3 0 0 0 0 1 0 30
+#camera -4 0 1 0 0 1 0 0 1 45
+#camera -4 -4 4 1 0 0 0 1 0 30
+
+camera 0 -70 45 0 0.2 0 0 1 0 45
+
+# lighting/material definitions
+# for initial testing, you should get the geometry right
+# you may want to use dummy (constant) shading, ignoring these lines
+
+ambient .1 .1 .1
+directional 0 0 1 .5 .5 .5 
+point 4 0 4 .5 .5 .5
+shininess 10
+
+# Now specify the geometry 
+# Again, for initial testing, maybe you want to implement a dummy 
+# ray-plane intersection routine, instead of reading this fully.
+# Though it's probably simpler you just implement this, for later 
+# parts of the assignment.
+
+#reflect 0
+
+#model media/chess_landscape.ppm media/board.obj
+#model media/chess_landscape.ppm media/rim.obj 1 1
+
+reflect 0.2
+translucency 0.9
+#the following is the dielectric of air over glass
+refract 0.65809210526
+
+diffuse 1 1 1 
+specular 1 1 1
+
+sphere 0 0 15 10
+
+diffuse 1 1 1 
+specular 1 1 1
+
+
+reflect  1.0
+translucency 0
+sphere 10 20 15 5
+sphere -10 0 30 10
+sphere 40 -5 15 7
+sphere 4 -20 10 6
+sphere -20 -30 15 5
+
+maxverts 20 
+
+vertex -30 -30 0 
+vertex -20 -30 0
+vertex -20 +30 0
+vertex -30 +30 0 
+
+vertex -20 -30 0
+vertex -10 -30 0
+vertex -10 +30 0
+vertex -20 +30 0
+
+vertex -10 -30 0
+vertex   0 -30 0
+vertex   0 +30 0
+vertex -10 +30 0
+
+vertex   0 -30 0
+vertex +10 -30 0
+vertex +10 +30 0
+vertex   0 +30 0
+
+vertex +10 -30 0
+vertex +20 -30 0
+vertex +20 +30 0
+vertex +10 +30 0
+
+
+
+diffuse 0 0 1
+specular 0 0 1
+
+#quad 0 1 2 3
+tri 0 1 2
+tri 0 2 3
+
+diffuse 0 1 0
+specular 0 1 0
+
+tri 4 5 6
+tri 4 6 7
+
+diffuse 1 0 0
+specular 1 0 0
+
+tri 8 9 10
+tri 8 10 11
+
+diffuse 1 1 0
+specular 1 1 0
+
+tri 12 13 14
+tri 12 14 15
+
+diffuse 0 1 1
+specular 0 1 1
+
+tri 16 17 18
+tri 16 18 19
+
+

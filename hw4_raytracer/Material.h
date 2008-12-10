@@ -3,15 +3,26 @@
 
 #include "Light.h"
 
+const Colors BLACK = Colors(0.0f,0.0f,0.0f,0.0f);
+
 struct Material {
 	Colors diffuse;
 	Colors specular;
 	float shininess;
 	Colors emission;
+	float reflect;
+	float translucency;
+	float refract;
 	
 	// Default Material
-	Material() {		
-		shininess = 0.0f;		
+	Material() {
+		diffuse = BLACK;
+		specular = BLACK;
+		shininess = 0.0f;
+		emission = BLACK;
+		reflect = 0.0f;
+		translucency = 0.0f;
+		refract = 0.0f;
 	}
 	
 	// Copy material
@@ -21,7 +32,9 @@ struct Material {
 		specular = Colors(m.specular);
 		shininess = m.shininess;
 		emission = Colors(m.emission);
-		
+		reflect = m.reflect;
+		translucency = m.translucency;
+		refract = m.refract;
 	}
 
 };

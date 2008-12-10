@@ -7,18 +7,82 @@
 FILE *inputfile, *outputfile;;
 Scene *s;
 const double tmax = 20000.0;
+const int max_depth = 6;
 
 vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height);
 bool debugPixel(int x, int y);
 
-//gloAmb is defined in Scene.cpp which is a LightColor object
-void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor) {
+bool refract(vec3& refractedRay, const vec3& normal, const vec3& incident, const double n) { 
+
+	const double cosI = dot(normal, incident); 
+	const double sinT2 = n * n * (1.0 - cosI * cosI); 
+	if (sinT2 > 1.0) { 
+		return false; 
+	}
+	refractedRay = n * incident - (n + sqrt(1.0 - sinT2)) * normal;
+	return true;
+}
+/*
+vec3 refraction(vec3& incident, vec3& normal, double dielectric)
+{
+	
+	double cosTheta1 = dot(normal, vec3(incident.x, incident.y, incident.z) );
+	double cosTheta2 = sqrt( 1 - (dielectric*dielectric)*( 1 - (cosTheta1*cosTheta1)) );
+	if(cosTheta1 > 0)
+	{
+		vec3 vRefract = vec3(dielectric*incident.x, dielectric*incident.y, dielectric*incident.z);
+		double temp = (dielectric*cosTheta1) - cosTheta2;
+		vRefract = vec3(vRefract.x + (temp*normal.x), vRefract.y + (temp*normal.y), vRefract.z + (temp*normal.z) );
+		vRefract.normalize();
+		return vRefract;
+	}
+	else
+	{
+		vec3 vRefract = vec3(dielectric*incident.x, dielectric*incident.y, dielectric*incident.z);
+		double temp = cosTheta2 + (dielectric*cosTheta1);
+		vRefract = vec3(vRefract.x - (temp*normal.x), vRefract.y - (temp*normal.y), vRefract.z - (temp*normal.z) );
+		vRefract.normalize();
+		return vRefract;
+	}
+}
+*/
+
+Colors rayColor(vec3& origin, vec3& direction, const int depth, bool debug) {
+	
+	Colors finalColor = BLACK;
+	
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//    Find closest intersection
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	int hits = 0;
+	Intersect intersection = Intersect(origin, direction, tmax);
+	
+	for(int k = 0; k < s->objects.size(); k++) {
+		
+		/*
+		 if (debug) {
+		 printf("Debug: Shape: %i, type=%i, t=%f\n",k, s->objects[k]->type, intersection.t);
+		 }
+		 */
+		if (s->objects[k]->intersect(origin, direction, &intersection, false)) {
+			hits++;
+		}
+		
+	}
+	
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//    If ray doesn't intersect anything, return black
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	if (hits == 0) return finalColor;
+		
+	intersection.debug = debug;
 	
 	// =========================
-	//    AMBIENT + EMMISSION
+	//    EMMISSION
 	// =========================
 	
-	finalColor = s->ambient + intObject->mat->emission;
+	finalColor = s->ambient + intersection.mat->emission;
 	
 	// ~~~~~~~~~~~~~~~~~~~~~
 	//    For each light
@@ -34,16 +98,22 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		// Check if its a direction light or a positional light using dirflag = 1 
 		// for directional and 0 for positional
 		if (light->dirFlag == 0) {
-			lightdirection =  (light->directionorpos) - (intObject->Point); // TODO: Check this
+			lightdirection =  (light->directionorpos) - (intersection.Point); // TODO: Check this
 			lightdirection.normalize();
 		} else {
 			lightdirection = light->directionorpos;
 		}
 		
-		// Check whether the light source is behind the object
-		double cosTheta = dot(intObject->normal, lightdirection);
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		//    Check whether the light source is behind the object
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		
-		if (intObject->debug) printf("Debug: cosTheta=%f\n", cosTheta);
+		double cosTheta = dot(intersection.normal, lightdirection);
+		
+		if (intersection.debug) printf("Debug: light->directionorpos [%f, %f, %f]\n", (light->directionorpos).x, (light->directionorpos).y, (light->directionorpos).z);
+		if (intersection.debug) printf("Debug: intersection.Point [%f, %f, %f]\n", (intersection.Point).x, (intersection.Point).y, (intersection.Point).z);
+		if (intersection.debug) printf("Debug: lightdirection [%f, %f, %f]\n", lightdirection.x, lightdirection.y, lightdirection.z);
+		if (intersection.debug) printf("Debug: cosTheta=%f\n", cosTheta);
 		
 		if (cosTheta <= 0) continue;
 		
@@ -51,31 +121,35 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		//    Check for Shadow
 		// ~~~~~~~~~~~~~~~~~~~~~
 		
-		vec3 origin = intObject->Point;
-		vec3 ray = lightdirection;
-		Intersect *intersection = new Intersect();
+		vec3 shadowOrigin = intersection.Point;
+		vec3 shadowRay = lightdirection;
+		Intersect *shadowIntersect = new Intersect();
 		
-		if (intObject->debug) printf("Debug: Org [%f, %f, %f]\n", origin.x, origin.y, origin.z);
-		if (intObject->debug) printf("Debug: Ray [%f, %f, %f]\n", ray.x, ray.y, ray.z);
+		if (shadowIntersect->debug) printf("Debug: Org [%f, %f, %f]\n", shadowOrigin.x, shadowOrigin.y, shadowOrigin.z);
+		if (shadowIntersect->debug) printf("Debug: Ray [%f, %f, %f]\n", shadowRay.x, shadowRay.y, shadowRay.z);
 		
 		
 		// For point lights, we need to check if there is an object closer than the light source 
 		if (light->dirFlag == 0) {
-			intersection->t = nv_norm(lightdirection);
+			shadowIntersect->t = nv_norm(lightdirection);
 		} else {
-			intersection->t = tmax;
+			shadowIntersect->t = tmax;
 		}
 		
-		if (intObject->debug) printf("Debug: t=%f\n", intersection->t);
+		if (shadowIntersect->debug) printf("Debug: t=%f\n", shadowIntersect->t);
 		
 		bool shadowed = false;
 		
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		//    Check for each object until we find a shadowing object
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		
 		for(int k = 0; k < s->objects.size(); k++) {
 			
-			shadowed = s->objects[k]->intersect(origin, ray, intersection, true);
+			shadowed = s->objects[k]->intersect(shadowOrigin, shadowRay, shadowIntersect, true);
 			// Stop checking rest of the objects
 			if (shadowed) {
-				if (intObject->debug) printf("Debug: Light Source=%i shadowed by object=%i (type=%i)\n",i,k,s->objects[k]->type);
+				if (shadowIntersect->debug) printf("Debug: Light Source=%i shadowed by object=%i (type=%i)\n",i,k,s->objects[k]->type);
 				break;
 			}
 		}
@@ -87,36 +161,112 @@ void rayColor(vec3 eyePoint, Intersect *intObject, int depth, Colors& finalColor
 		// =====================
 		//    SPECULAR
 		// =====================
+		
+		Colors specularColor;
 
-		//The viewing direction
-		vec3 viewVec = eyePoint - intObject->Point;
-		viewVec.normalize();
+		if ( ! (intersection.mat->specular == BLACK)) {
 		
-		//The halfway vector (blinn-phong model)
-		vec3 halfAngle = vec3((viewVec.x + lightdirection.x)/2.0,
-							  (viewVec.y + lightdirection.y)/2.0,
-							  (viewVec.z + lightdirection.z)/2.0);
-		halfAngle.normalize();
+			//The viewing direction
+			vec3 viewVec = origin - intersection.Point;
+			viewVec.normalize();
+			
+			//The halfway vector (blinn-phong model)
+			vec3 halfAngle = vec3((viewVec.x + lightdirection.x)/2.0,
+								  (viewVec.y + lightdirection.y)/2.0,
+								  (viewVec.z + lightdirection.z)/2.0);
+			halfAngle.normalize();
+			
+			double specularity = (double) pow((double)(dot(intersection.normal, halfAngle)), (double)intersection.mat->shininess);
+			specularity = specularity > 0 ? specularity : 0;
+			specularColor = intersection.mat->specular * specularity;
 		
-		double specularity = (double) pow((double)(dot(intObject->normal, halfAngle)), (double)intObject->mat->shininess);
-		specularity = specularity > 0 ? specularity : 0;
-		Colors specularColor = intObject->mat->specular * specularity;
-		
+		} else {
+			specularColor = BLACK;
+		}
+
 		// =====================
 		//    DIFFUSE
 		// =====================
 		
-		Colors diffuseColor = intObject->mat->diffuse * cosTheta;
+		Colors diffuseColor;
 		
+		if ( ! (intersection.mat->diffuse == BLACK)) {
+			
+			diffuseColor = intersection.mat->diffuse * cosTheta;
+		
+		} else {
+			
+			diffuseColor = BLACK;
+		
+		}
+
 		// Add Light's Color x (Specular + Diffuse) to the overall color
 		
 		Colors lightColor = light->lightColor * ( specularColor + diffuseColor );
 		finalColor = finalColor + lightColor;
+		
+		// =====================
+		//    REFLECTION
+		// =====================
+		
+		if (intersection.mat->reflect > 0.0f || depth > 0) {
+			// Find reflection ray
+			
+			vec3 reflectedRay;
+			reflect(reflectedRay, intersection.normal, direction);
+			reflectedRay = -reflectedRay;
+			
+			vec3 reflectPoint = intersection.Point + (0.01f * reflectedRay);
+			
+			Colors reflectColor = rayColor(reflectPoint,
+										   reflectedRay,
+										   (depth-1),
+										   debug);
+			
+			finalColor = finalColor +  reflectColor * (intersection.mat->reflect);
+		}
+		
+		// =====================
+		//    REFRACTION
+		// =====================
+		
+		if (intersection.mat->translucency > 0.0f || depth > 0) {
+			// Find reflection ray
+			
+			vec3 refractRay; // = refraction(direction, intersection.normal, intersection.mat->refract);
+			
+			if (refract(refractRay,
+						intersection.normal,
+						direction,
+						intersection.mat->refract)) {
+				
+				vec3 refractPoint = intersection.Point + (0.01f * refractRay);
+			
+				Colors refractColor = rayColor(refractPoint,
+											   refractRay,
+											   (depth-1),
+											   debug);
+				
+				finalColor = finalColor +  refractColor * (intersection.mat->translucency);
+			}
+			/*
+			Colors refractColor = rayColor(intersection.Point,
+										   refractRay,
+										   (depth-1),
+										   debug);
+			
+			finalColor = finalColor +  refractColor * (intersection.mat->translucency);
+			 */
+		}
+		
+		
 	}
 	
-	if (intObject->debug) {
+	if (intersection.debug) {
 		printf("Debug: finalColor r=%f, g=%f, b=%f\n", finalColor.r, finalColor.g, finalColor.b);
 	}
+	
+	return finalColor;
 }
 
 int main (int argc, char * const argv[]) {
@@ -158,7 +308,6 @@ int main (int argc, char * const argv[]) {
 	//tri[1] = triangle(vec3(-1,-1,0), vec3(1,1,0), vec3(-1,1,0));
 	
 	int y,x;
-	Intersect *intersection = new Intersect();
 	Colors finalColor;
 	
 	for (y = 0 ; y < s->getSizeY() ; y++) {
@@ -172,75 +321,18 @@ int main (int argc, char * const argv[]) {
 				printf("Debug: x=%i, y=%i\n", x, y);
 			}
 
-			// Reset intersection object
-			int hits = 0;
-			intersection->t = tmax;
-			intersection->rayOrigin = origin;
-			intersection->rayDirection = ray;
-
-			for(int k = 0; k < s->objects.size(); k++) {
+			Colors pixelColor = rayColor(origin, ray, 6, debugPixel(x,y));
 				
-				s->objects[k]->debug = debugPixel(x,y);
-				/*
-				if (debugPixel(x,y)) {
-					printf("Debug: Shape: %i, type=%i, t=%f\n",k, s->objects[k]->type, intersection->t);
-				}
-				*/
-				if (s->objects[k]->intersect(origin, ray, intersection,false)) {
-					hits++;
-				}
+			//printf("Debug: R: %f, G: %f, B:%f\n", finalColor.r, finalColor.g, finalColor.b);
 				
-			}
+			if (pixelColor.r > 1.0) pixelColor.r = 1.0;
+			if (pixelColor.g > 1.0) pixelColor.g = 1.0;
+			if (pixelColor.b > 1.0) pixelColor.b = 1.0;
 			
-			if (hits > 0) {
-				//printf("Comes here\n");
-				intersection->debug = debugPixel(x,y);
-				rayColor(intersection->rayOrigin, intersection, 10, finalColor);
-				
-				//printf("Debug: R: %f, G: %f, B:%f\n", finalColor.r, finalColor.g, finalColor.b);
-				
-				/*
-				Material* m = intersection->mat;
-				if(m != NULL)
-				{
-					float r = m->diffuse[0] * 255.0f;
-					float g = m->diffuse[1] * 255.0f;
-					float b = m->diffuse[2] * 255.0f;
-				}
-				else
-				{
-					float r = 255.0;
-					float g = 255.0;
-					float b = 255.0;
-				}
-				
-				if ((x==s->getSizeX()/2) && (y==s->getSizeY()/2)) {
-					printf("Debug: diffuse r=%f g=%f b=%f\n",
-						r,
-						g,
-						b);
-					
-					printf("Debug: diffuse r=%i g=%i b=%i\n",
-						(int)r,
-						(int)g,
-						(int)b);
-						
-				}
-				*/
-				
-				if (finalColor.r > 1.0) finalColor.r = 1.0;
-				if (finalColor.g > 1.0) finalColor.g = 1.0;
-				if (finalColor.b > 1.0) finalColor.b = 1.0;
-				
-				outImg->setPixel(y, x, (int)(finalColor.r * 255.0f),
-									   (int)(finalColor.g * 255.0f),
-									   (int)(finalColor.b * 255.0f));
-				
-			} else {
-				outImg->setPixel(y, x, 0, 0, 0);
-			}
+			outImg->setPixel(y, x, (int)(pixelColor.r * 255.0f),
+								   (int)(pixelColor.g * 255.0f),
+								   (int)(pixelColor.b * 255.0f));
 
-			
 			
 			//printf("Debug: Origin x=%i y=%i\n", x, y);
 			/*

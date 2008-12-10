@@ -1,0 +1,36 @@
+
+#size 320 240 
+size 640 480 
+
+camera 3.2 2.4 -7 3.2 2.4 -1 0 1 0 45
+
+output 3spheres.ppm
+
+##################
+### List of lights
+##################
+point 6.4 2.4 -1  1 1 1
+directional 6.4 2.4 -100 0.6 0.7 1.0
+
+#directional 0 0 1 0.6 0.7 1.0
+
+##################
+### List of spheres
+##################
+
+diffuse 1.0 1.0 0.0
+reflect 0.5
+
+sphere 2.33 2.9 0.0 1
+
+diffuse 0.0 1.0 1.0
+reflect 0.5
+
+sphere 4.07 2.9 0.0 1
+
+diffuse 1.0 0.0 1.0
+reflect 0.5
+
+sphere 3.2 1.4 0.0 1
+
+

@@ -2,13 +2,16 @@
 # Intended to show transforms
 # I know it's not the most exciting of scenes...
 
+#size 320 240 
 size 640 480 
 
 camera 0 -4 4 0 -1 0 0 1 1 45
 
 output testscene3.ppm 
 
-directional 0 0 1 1 1 1
+directional -1 1 1 1 1 1
+#sphere 1 1 1 0.1
+#point 1 1 1 1 1 1
 
 maxverts 8
 
@@ -29,7 +32,8 @@ pushTransform
 # instancing to make this simpler.  Alternatively, define a ray-cube 
 # intersection test.
 
-diffuse .7 .7 1
+specular .7 .7 1
+shininess 60
 
 scale 2 1 .25
 tri 0 1 5 
@@ -51,6 +55,7 @@ pushTransform
 # Now, I draw the 4 legs of the table.
 # Note that like OpenGL, commands right-multiply
 
+#specular 0 0 0
 diffuse .7 .7 .4
 
 translate -1.75 -.8 -.25 

@@ -21,7 +21,8 @@ Scene::Scene() {
 
 	stck = new StackObject();
 	
-	ambient = Colors(0.2f,0.2f,0.2f,1.0f);
+	//ambient = Colors(0.2f,0.2f,0.2f,1.0f);
+	ambient = BLACK;
 }
 
 Scene::~Scene() {
@@ -530,6 +531,36 @@ void Scene::parsefile (FILE *fp) {
 			assert(num == 4) ; assert (!strcmp(command, "emission")) ;
 			
 			currMat.emission = Colors(emission[0],emission[1],emission[2],1.0);
+		}
+		
+		// *******************  Reflect *******************
+		
+		else if (!strcmp(command, "reflect")) {
+			float reflect ;
+			int num = sscanf(line, "%s %f", command, &reflect) ;
+			assert(num == 2) ; assert (!strcmp(command, "reflect")) ;
+			
+			currMat.reflect = reflect;
+		}
+		
+		// *******************  Refract *******************
+		
+		else if (!strcmp(command, "refract")) {
+			float refract ;
+			int num = sscanf(line, "%s %f", command, &refract) ;
+			assert(num == 2) ; assert (!strcmp(command, "refract")) ;
+			
+			currMat.refract = refract;
+		}
+		
+		// *******************  Translucency *******************
+		
+		else if (!strcmp(command, "translucency")) {
+			float translucency ;
+			int num = sscanf(line, "%s %f", command, &translucency) ;
+			assert(num == 2) ; assert (!strcmp(command, "translucency")) ;
+			
+			currMat.translucency = translucency;
 		}
 		
 		// *****************************************************
