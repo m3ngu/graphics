@@ -38,7 +38,8 @@ class Scene {
 	mat4 modelViewMatrix;
 
   public:
-  
+	Attenuation currAttenuation;
+	cubemap cm;
 	StackObject *stck;
 	// Constructor / Deconstructor
 	Scene ();

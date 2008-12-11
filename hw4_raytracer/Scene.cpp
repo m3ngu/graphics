@@ -19,8 +19,8 @@ Scene::Scene() {
 	maxdepth = 5 ;
 	lightnum = 0 ;
 
+	//cubeMapFlag = 0;
 	stck = new StackObject();
-	
 	//ambient = Colors(0.2f,0.2f,0.2f,1.0f);
 	ambient = BLACK;
 }
@@ -71,7 +71,6 @@ void Scene::parsefile (FILE *fp) {
 	
 	char line[1000], command[1000] ; // Very bad to prefix array size :-)
 	Material currMat;
-	Attenuation currAttenuation;
 	
 	while (!feof(fp)) {
 		fgets(line,sizeof(line),fp) ;
@@ -124,7 +123,83 @@ void Scene::parsefile (FILE *fp) {
 					modelViewMatrix.a30, modelViewMatrix.a31, modelViewMatrix.a32, modelViewMatrix.a33);
 			*/
 		}
-		
+		// *******************  CubeMap *******************
+		else if (!strcmp(command, "Cubemap.up")) {
+			//cm.textureUse = 1;
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.fileup = new char[strlen(filename)];
+				strcpy(cm.fileup,filename);
+				printf("DEBUG: Filename is %s\n",cm.fileup);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.up filename\n") ;
+					exit(1) ;
+				}				
+				assert(!strcmp(command, "Cubemap.up")) ;
+		}
+		else if (!strcmp(command, "Cubemap.down")) {
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.filedown = new char[strlen(filename)];
+				strcpy(cm.filedown,filename);
+				printf("DEBUG: Filename is %s\n",cm.filedown);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.down filename\n") ;
+					exit(1) ;
+				}				
+				assert(!strcmp(command, "Cubemap.down")) ;
+		}
+		else if (!strcmp(command, "Cubemap.left")) {
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.fileleft = new char[strlen(filename)];
+				strcpy(cm.fileleft,filename);
+				printf("DEBUG: Filename is %s\n",cm.fileleft);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.left filename\n") ;
+					exit(1) ;
+				}				
+				assert(!strcmp(command, "Cubemap.left")) ;
+		}
+		else if (!strcmp(command, "Cubemap.right")) {
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.fileright = new char[strlen(filename)];
+				strcpy(cm.fileright,filename);
+				printf("DEBUG: Filename is %s\n",cm.fileright);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.right filename\n") ;
+					exit(1) ;
+				}				
+				assert(!strcmp(command, "Cubemap.right")) ;
+		}
+		else if (!strcmp(command, "Cubemap.forward")) {
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.fileforward = new char[strlen(filename)];
+				strcpy(cm.fileforward,filename);
+				printf("DEBUG: Filename is %s\n",cm.fileforward);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.forward filename\n") ;
+					exit(1) ;
+				}
+				
+				assert(!strcmp(command, "Cubemap.forward")) ;
+		}
+	    else if (!strcmp(command, "Cubemap.backward")) {
+				char filename[1000];
+				int num = sscanf(line, "%s %s", command, filename) ;
+				cm.filebackward = new char[strlen(filename)];
+				strcpy(cm.filebackward,filename);
+				printf("DEBUG: Filename is %s\n",cm.filebackward);
+				if (num != 2) {
+					fprintf(stderr, "Cubemap.backward filename\n") ;
+					exit(1) ;
+				}
+				
+				assert(!strcmp(command, "Cubemap.backward")) ;
+		}
+
 		// *************************************************
 		// *******************  GEOMETRY *******************
 		// *************************************************
@@ -561,16 +636,6 @@ void Scene::parsefile (FILE *fp) {
 			assert(num == 2) ; assert (!strcmp(command, "translucency")) ;
 			
 			currMat.translucency = translucency;
-		}
-		
-		// *******************  Density *******************
-		
-		else if (!strcmp(command, "density")) {
-			float density ;
-			int num = sscanf(line, "%s %f", command, &density) ;
-			assert(num == 2) ; assert (!strcmp(command, "density")) ;
-			
-			currMat.density = density;
 		}
 		
 		// *****************************************************

@@ -35,6 +35,8 @@ public:
 	Material mat;
 	shape_type type;
 	bool debug;
+	int isCubeMapSet;
+	int isCubeMap;
 };
 
 // =============================================================================

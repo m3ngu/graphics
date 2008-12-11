@@ -103,7 +103,7 @@ public:
 	Colors lightColor;
 	Attenuation attenuation;
 	int dirFlag;
-	float calculateAttenuation(float distance);
+	float calculateAttenuation(float distance,Attenuation attn);
 	virtual ~Lights(){};
 };
 
@@ -117,8 +117,9 @@ inline Lights::Lights(int directionFlag, vec3 dirorpos, Colors lgtColor) {
 	}
 }
 
-inline float Lights::calculateAttenuation(float distance)
+inline float Lights::calculateAttenuation(float distance, Attenuation attn)
 {
+	attenuation = attn;
 	return (1/(float)(attenuation.constant
 	                + attenuation.linear * distance
 					+ attenuation.quadratic * distance * distance));

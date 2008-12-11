@@ -16,6 +16,8 @@ public:
 	vec3 rayDirection;
 	vec3 normal;
 	Material* mat;
+	Colors textureColor;
+	int isCubeMapSet;
 	//obj* currobject;
 	Intersect();
 	Intersect(vec3 origin, vec3 direction, double tmax);

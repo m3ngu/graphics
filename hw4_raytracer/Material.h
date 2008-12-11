@@ -2,8 +2,9 @@
 #define _material_
 
 #include "Light.h"
+#include "CubeMap.h"
 
-const Colors BLACK = Colors(0.0f,0.0f,0.0f,0.0f);
+const Colors BLACK = Colors(1.0f,0.0f,0.0f,0.0f);
 
 struct Material {
 	Colors diffuse;
@@ -13,7 +14,8 @@ struct Material {
 	float reflect;
 	float translucency;
 	float refract;
-	float density;
+	int isCubeMap;
+	char *fileup, *filedown, *fileright, *fileleft, *fileforward, *filebackward;
 	
 	// Default Material
 	Material() {
@@ -24,7 +26,6 @@ struct Material {
 		reflect = 0.0f;
 		translucency = 0.0f;
 		refract = 0.0f;
-		density = 1.0f;
 	}
 	
 	// Copy material
@@ -37,7 +38,6 @@ struct Material {
 		reflect = m.reflect;
 		translucency = m.translucency;
 		refract = m.refract;
-		density = m.density;
 	}
 
 };
