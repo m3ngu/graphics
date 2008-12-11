@@ -51,6 +51,8 @@ Colors rayColor(vec3& origin, vec3& direction, const int depth, bool debug) {
 	
 	Colors finalColor = BLACK;
 	
+	if (depth == 0) return finalColor;
+	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	//    Find closest intersection
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -209,7 +211,7 @@ Colors rayColor(vec3& origin, vec3& direction, const int depth, bool debug) {
 		//    REFLECTION
 		// =====================
 		
-		if (intersection.mat->reflect > 0.0f || depth > 0) {
+		if (intersection.mat->reflect > 0.0f && depth > 0) {
 			// Find reflection ray
 			
 			vec3 reflectedRay;
@@ -230,7 +232,7 @@ Colors rayColor(vec3& origin, vec3& direction, const int depth, bool debug) {
 		//    REFRACTION
 		// =====================
 		
-		if (intersection.mat->translucency > 0.0f || depth > 0) {
+		if (intersection.mat->translucency > 0.0f && depth > 0) {
 			// Find reflection ray
 			
 			vec3 refractRay; // = refraction(direction, intersection.normal, intersection.mat->refract);
@@ -360,8 +362,10 @@ int main (int argc, char * const argv[]) {
 			}
 			*/
 			//Intersection hit = Intersect (ray, scene) ; 
-			//image[i][j] = FindColor(hit) ; 
+			//image[i][j] = FindColor(hit) ;
+			
 		}
+		printf("Status: Rendering line %i of %i...\n", y+1, s->getSizeY());
 	}
 	
 	

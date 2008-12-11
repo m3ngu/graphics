@@ -13,6 +13,7 @@ struct Material {
 	float reflect;
 	float translucency;
 	float refract;
+	float density;
 	
 	// Default Material
 	Material() {
@@ -23,6 +24,7 @@ struct Material {
 		reflect = 0.0f;
 		translucency = 0.0f;
 		refract = 0.0f;
+		density = 1.0f;
 	}
 	
 	// Copy material
@@ -35,6 +37,7 @@ struct Material {
 		reflect = m.reflect;
 		translucency = m.translucency;
 		refract = m.refract;
+		density = m.density;
 	}
 
 };

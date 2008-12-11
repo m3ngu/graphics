@@ -2,16 +2,19 @@
 # Intended to show transforms
 # I know it's not the most exciting of scenes...
 
-#size 320 240 
-size 640 480 
+size 320 240 
+#size 640 480 
+#size 1024 768
+
 
 camera 0 -4 4 0 -1 0 0 1 1 45
 
 output testscene3.ppm 
 
-directional -1 1 1 1 1 1
+ambient 0.05 0.05 0.05
+directional -1 -5 10 1 1 1
 #sphere 1 1 1 0.1
-#point 1 1 1 1 1 1
+point 1 5 10 1 1 1
 
 maxverts 8
 
@@ -181,4 +184,11 @@ translate -1.5 .8 0.65
 scale 0.4 0.4 0.4
 sphere 0 0 0 1
 
+diffuse 0.0 0.0 0.8 
+popTransform
+pushTransform
+translate 0 0 -3.5
+scale 4.0 4.0 1.0
+tri 0 1 2
+tri 0 2 3
 

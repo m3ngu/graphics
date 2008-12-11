@@ -563,6 +563,16 @@ void Scene::parsefile (FILE *fp) {
 			currMat.translucency = translucency;
 		}
 		
+		// *******************  Density *******************
+		
+		else if (!strcmp(command, "density")) {
+			float density ;
+			int num = sscanf(line, "%s %f", command, &density) ;
+			assert(num == 2) ; assert (!strcmp(command, "density")) ;
+			
+			currMat.density = density;
+		}
+		
 		// *****************************************************
 		// *******************  MISCELLANOUS *******************
 		// *****************************************************
