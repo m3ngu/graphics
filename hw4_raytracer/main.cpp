@@ -9,7 +9,7 @@ Scene *s;
 const double tmax = 20000.0;
 const int max_depth = 6;
 
-vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height);
+vec3 RayThruPixel(Camera * cam, float x, float y, int width, int height);
 bool debugPixel(int x, int y);
 
 bool refract(vec3& refractedRay, const vec3& normal, const vec3& incident, const double n) { 
@@ -310,28 +310,44 @@ int main (int argc, char * const argv[]) {
 	int y,x;
 	Colors finalColor;
 	
+	vec3 origin = *(cam->getEye());
+	
 	for (y = 0 ; y < s->getSizeY() ; y++) {
 		for (x = 0 ; x < s->getSizeX() ; x++) {
-			vec3 ray = RayThruPixel(cam, x, y, s->getSizeX(), s->getSizeY()) ; 
 			
-			vec3 origin = *(cam->getEye());
-			//vec3 origin = vec3(0,0,0);
+			Colors pixelColor = BLACK;
 			
-			if (debugPixel(x,y)) {
-				printf("Debug: x=%i, y=%i\n", x, y);
+			for (float fragmentx = float(x) ; fragmentx < x + 1.0f; fragmentx += 0.5f ) {
+			    for (float fragmenty = float(y) ; fragmenty < y + 1.0f; fragmenty += 0.5f )
+			    {
+				    
+					float sampleRatio = 0.25f;
+				    
+                    vec3 ray = RayThruPixel(cam, fragmentx, fragmenty, s->getSizeX(), s->getSizeY()) ; 
+					
+					if (debugPixel(x,y)) {
+						printf("Debug: x=%i, y=%i\n", x, y);
+					}
+					
+					Colors temp = rayColor(origin, ray, 6, debugPixel(x,y));
+					
+                    // pseudo photo exposure
+                    float exposure = -1.00f; // random exposure value. TODO : determine a good value automatically
+	                temp.b = (1.0f - expf(temp.b * exposure));
+	                temp.r =  (1.0f - expf(temp.r * exposure));
+	                temp.g = (1.0f - expf(temp.g * exposure));
+					
+	                pixelColor = pixelColor + (temp * sampleRatio);
+					
+					if (pixelColor.r > 1.0) pixelColor.r = 1.0;
+					if (pixelColor.g > 1.0) pixelColor.g = 1.0;
+					if (pixelColor.b > 1.0) pixelColor.b = 1.0;
+					
+					outImg->setPixel(y, x, (int)(pixelColor.r * 255.0f),
+									 (int)(pixelColor.g * 255.0f),
+									 (int)(pixelColor.b * 255.0f));
+			    }
 			}
-
-			Colors pixelColor = rayColor(origin, ray, 6, debugPixel(x,y));
-				
-			//printf("Debug: R: %f, G: %f, B:%f\n", finalColor.r, finalColor.g, finalColor.b);
-				
-			if (pixelColor.r > 1.0) pixelColor.r = 1.0;
-			if (pixelColor.g > 1.0) pixelColor.g = 1.0;
-			if (pixelColor.b > 1.0) pixelColor.b = 1.0;
-			
-			outImg->setPixel(y, x, (int)(pixelColor.r * 255.0f),
-								   (int)(pixelColor.g * 255.0f),
-								   (int)(pixelColor.b * 255.0f));
 
 			
 			//printf("Debug: Origin x=%i y=%i\n", x, y);
@@ -365,7 +381,7 @@ int main (int argc, char * const argv[]) {
     return 0;
 }
 
-vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height) {
+vec3 RayThruPixel(Camera * cam, float x, float y, int width, int height) {
 	
 	vec3 * u = cam->getU();
 	vec3 * v = cam->getV();
@@ -377,8 +393,8 @@ vec3 RayThruPixel(Camera * cam, int x, int y, int width, int height) {
 	
 	//vec3 * eye = cam->getEye();
 	
-	float alpha = tan(fovx/2.0f) * (( (float)x - ((float)width/2.0f)) / ((float)width/2.0f)); 
-	float beta = tan(fovy/2.0f) * ((((float)height/2.0f) - (float)y) / ((float)height/2.0f));
+	float alpha = tan(fovx/2.0f) * (( x - ((float)width/2.0f)) / ((float)width/2.0f)); 
+	float beta = tan(fovy/2.0f) * ((((float)height/2.0f) - y) / ((float)height/2.0f));
 	
 	vec3 dir = (alpha * *u) + (beta * *v) - *w;
 	dir.normalize();
