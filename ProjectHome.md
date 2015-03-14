@@ -1,0 +1,1 @@
+The goal of this assignment is to get you started using the OpenGL graphics library. You will create a complete scene, with user controls. The emphasis is on understanding and implementing OpenGLs basic capabilities, as well as using them as building blocks in generating more complex effects.
